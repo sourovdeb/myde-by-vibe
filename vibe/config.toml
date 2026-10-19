@@ -1,0 +1,124 @@
+default_agent = "local-operator"
+log_interactions = true
+enable_telemetry = false
+include_commit_signature = false
+managed_shell_tools_enabled = true
+bypass_tool_permissions = true
+active_model = "glm-latest"
+connectors = [
+    { name = "wordpress_mcp_46cb", disabled_tools = [] },
+]
+skill_paths = [
+    "C:\\Users\\souro\\.vibe\\skills\\skills",
+    "H:\\00_SKILLS_AGENTS\\1-wordpress-manager\\skills",
+    "H:\\00_SKILLS_AGENTS\\1_system_manager\\skills",
+    "H:\\00_SKILLS_AGENTS\\biography-interview-kit-private-master\\skills",
+    "H:\\00_SKILLS_AGENTS\\biography-interview-kit-public\\skills",
+    "H:\\00_SKILLS_AGENTS\\default\\skills",
+    "H:\\00_SKILLS_AGENTS\\transcript-visual-director\\skills",
+    "E:\\jev-skill-router\\skills",
+]
+
+[[models]]
+name = "mistral-vibe-cli-latest"
+provider = "mistral"
+alias = "mistral-medium-3.5"
+thinking = "high"
+supports_images = true
+
+[[models]]
+name = "zai-glm-latest"
+provider = "mistral"
+alias = "glm-latest"
+thinking = "high"
+
+[[models]]
+name = "mistral-large-latest"
+provider = "mistral"
+alias = "mistral-large"
+thinking = "high"
+
+[[models]]
+name = "mistral-small-latest"
+provider = "mistral"
+alias = "mistral-small"
+
+[[models]]
+name = "mistral-ocr-latest"
+provider = "mistral"
+alias = "mistral-ocr"
+
+[tools.git_bash]
+permission = "always"
+max_output_bytes = 200000
+default_timeout = 300
+max_timeout_seconds = 1800
+denylist = []
+denylist_standalone = []
+sensitive_patterns = []
+
+[tools.powershell]
+permission = "always"
+max_output_bytes = 200000
+default_timeout = 300
+max_timeout_seconds = 1800
+denylist = []
+denylist_standalone = []
+sensitive_patterns = []
+
+[tools.bash]
+permission = "always"
+max_output_bytes = 200000
+denylist = []
+denylist_standalone = []
+sensitive_patterns = []
+
+[tools.win_shell]
+permission = "always"
+
+[tools.local_software]
+permission = "always"
+
+[tools.read_file]
+permission = "always"
+
+[tools.write_file]
+permission = "always"
+
+[tools.edit]
+permission = "always"
+
+[tools.grep]
+permission = "always"
+
+[tools.web_fetch]
+permission = "always"
+
+[tools.web_search]
+permission = "always"
+
+[[mcp_servers]]
+name = "resolve"
+transport = "stdio"
+command = "E:\\tools\\davinci-resolve-mcp\\venv\\Scripts\\python.exe"
+args = [
+    "E:\\tools\\davinci-resolve-mcp\\src\\server.py",
+]
+cwd = "E:\\tools\\davinci-resolve-mcp"
+startup_timeout_sec = 60.0
+tool_timeout_sec = 600.0
+prompt = "DaVinci Resolve Studio 21.1 (live, external scripting). Save/back up before destructive edits; never render unless asked."
+
+[mcp_servers.env]
+PYTHONPATH = "C:\\Program Files\\Blackmagic Design\\DaVinci Resolve\\ResolvePython\\lib\\modules"
+DAVINCI_RESOLVE_MCP_UPDATE_CHECK = "0"
+PYTHONIOENCODING = "utf-8"
+
+[[mcp_servers]]
+name = "browser-harness"
+transport = "stdio"
+command = "E:\\tools\\uv-tools\\bin\\browser-harness-mcp.exe"
+args = []
+startup_timeout_sec = 60.0
+tool_timeout_sec = 300.0
+prompt = "Control the user's real Chrome via browser-harness CDP daemon: list_tabs, page_info, new_tab, click, type, screenshots. Uses the logged-in profile. Never close tabs you did not create. If Chrome is not running, launch it detached via PowerShell Start-Process; verify downloads by byte size, not Chrome UI state."
