@@ -1,0 +1,14 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "browser-harness": {
+      "type": "stdio",
+      "command": "E:\\tools\\uv-tools\\bin\\browser-harness-mcp.exe",
+      "args": [],
+      "env": {
+        "BH_TAB_MARKER": "0"
+      },
+      "cwd": "E:\\tools\\uv-tools\\bin"
+    }
+  }
+}

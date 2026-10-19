@@ -1,0 +1,54 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "double-control",
+  "version": "1.0.0",
+  "description": "Double Control System - Chrome Extension + browser-harness MCP for seamless Chrome automation. Provides unified control over Chrome via both external CDP and in-browser extension.",
+  "author": {
+    "name": "Sourov Deb",
+    "url": "https://sourovdeb.com/"
+  },
+  "homepage": "https://github.com/sourovdeb/chrome-communication-extension",
+  "repository": "https://github.com/sourovdeb/chrome-communication-extension",
+  "license": "MIT",
+  "keywords": ["chrome", "browser", "automation", "extension", "cdp", "mcp"],
+  "extensions": {
+    "ai.mistral.vibe": {
+      "schemaVersion": 1,
+      "toolNamespace": "doubleControl",
+      "toolOverrides": {
+        "browser_list_tabs": {
+          "name": "list_tabs",
+          "exposure": "direct_and_programmatic"
+        },
+        "browser_new_tab": {
+          "name": "new_tab",
+          "exposure": "direct_and_programmatic"
+        },
+        "browser_switch_tab": {
+          "name": "switch_tab",
+          "exposure": "direct_and_programmatic"
+        },
+        "browser_close_tab": {
+          "name": "close_tab",
+          "exposure": "direct_and_programmatic"
+        },
+        "browser_capture_screenshot": {
+          "name": "capture_screenshot",
+          "exposure": "direct_and_programmatic"
+        },
+        "browser_page_info": {
+          "name": "page_info",
+          "exposure": "direct_and_programmatic"
+        },
+        "browser_click": {
+          "name": "click",
+          "exposure": "direct_and_programmatic"
+        },
+        "browser_type": {
+          "name": "type",
+          "exposure": "direct_and_programmatic"
+        }
+      }
+    }
+  }
+}

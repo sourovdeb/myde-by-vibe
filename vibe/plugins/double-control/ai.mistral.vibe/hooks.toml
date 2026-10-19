@@ -1,0 +1,26 @@
+## Double Control Hooks
+## Automatically enhance browser operations with Double Control
+
+[[hooks]]
+name = "enhance-browser-harness-calls"
+type = "pre_tool"
+match = "browser_harness.list_tabs"
+command = "python"
+args = ["-c", "print('Double Control: browser-harness MCP active. Use tools.browser_harness.* for 23 browser control tools')"]
+strict = false
+
+[[hooks]]
+name = "enhance-new-tab-calls"
+type = "pre_tool"
+match = "browser_harness.new_tab"
+command = "python"
+args = ["-c", "import time; print('Double Control Tip: Add time.sleep(1-2) after new_tab() for page load'); time.sleep(0.01)"]
+strict = false
+
+[[hooks]]
+name = "warn-chrome-extension-pages"
+type = "pre_tool"
+match = "browser_harness.capture_screenshot"
+command = "python"
+args = ["-c", "print('Note: capture_screenshot() fails on chrome:// pages (Chrome restriction)')"]
+strict = false
