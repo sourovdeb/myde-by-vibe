@@ -20,6 +20,12 @@ Set on `sourovdeb/myde-by-vibe` via `gh secret set`. Values are redacted here.
 - `WP_DB_NAME` = u839078121_rUgwv
 - `WP_DB_USER` = u839078121_gVGpV
 - `WP_DB_PASSWORD` = SrV…zCi7jv
+- `HOSTINGER_DB_USER_PASSWORD` = 076…net_ (second candidate DB-user password from .secrets.md)
+- `WP_SITE_URL` = https://sourovdeb.com
+- `WP_REST_BASE` = https://sourovdeb.com/wp-json/wp/v2/
+- `WP_USERNAME` = sourovdeb@zohomail.com
+- `TEMP_PASSWORD_PATTERN` = 076…vanessaThevenet_ / 076…thevenet_
+- `FRANCE_TRAVAIL_APP` = Automation_de_rechereche_demploi
 - `GOOGLE_CLIENT_ID` = 394864308567-hr45…googleusercontent.com
 - `GOOGLE_CLIENT_SECRET` = GOCSPX-…2Ru (project youtube-api-lth)
 - `PISTE_API_KEY_ID` = 918d…941e
@@ -39,7 +45,10 @@ Set on `sourovdeb/myde-by-vibe` via `gh secret set`. Values are redacted here.
 - `DEVTO_PUBLISHED` = false
 - `CORE_API_KEY` = oOD…LQF
 - `SKYVERN_API_KEY` = eyJhbGciOiJIUzI1NiIs… (JWT)
-- `ZAI_API_KEY` = (not present in uploads — key hash only: ae5ca0f7c0a88d61)
+- `ZAI_API_KEY` = **not present in uploads** (key hash only: ae5ca0f7c0a88d61)
+- `GITHUB_TOKEN` = **not present in uploads** (fingerprint sha256:0ceb5a5457e426ed)
+- `OPENCODE_GO_API_KEY` = **not present in uploads** (fingerprint sha256:2b2b5f3075cd75e2)
+- `OPENROUTER_API_KEY` = **not present in uploads** (fingerprint sha256:f2aee9ccaf3eb9f7)
 
 ## Bulk data secrets
 - `CHROME_PASSWORDS_CSV` = gzip+base64 of the 539-row Chrome passwords export (restore: `base64 -d | gunzip`)

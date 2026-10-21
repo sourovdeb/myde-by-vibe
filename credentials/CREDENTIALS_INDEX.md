@@ -9,7 +9,7 @@ This file intentionally contains **no secret values**.
 | Service | URL | Key / Secret name | Description |
 |---|---|---|---|
 | Hostinger MCP | https://mcp.hostinger.com | `HOSTINGER_API_KEY` | Bearer token for Hostinger MCP server (deploys, hosting ops) |
-| Hostinger MySQL | — | `HOSTINGER_DB_NAME`, `HOSTINGER_DB_USER`, `HOSTINGER_DB_PASSWORD` | MySQL database `u839078121_rUgwv` (191 MB) and user `u839078121_gVGpV` (expires 2026-04-06) for sourovdeb.com |
+| Hostinger MySQL | — | `HOSTINGER_DB_NAME`, `HOSTINGER_DB_USER`, `HOSTINGER_DB_PASSWORD`, `HOSTINGER_DB_USER_PASSWORD` | MySQL database `u839078121_rUgwv` (191 MB) and user `u839078121_gVGpV` (expires 2026-04-06) for sourovdeb.com; two candidate user passwords recorded (`SrV…` and the 0767… pattern) |
 
 ## WordPress (sourovdeb.com)
 
@@ -17,6 +17,7 @@ This file intentionally contains **no secret values**.
 |---|---|---|---|
 | WP REST (App Password "For_Agents") | https://sourovdeb.com/wp-json/wp/v2/ | `WP_APP_PASSWORD` | WP application password for user `sourovdeb` |
 | WP REST (App Password, zohomail login) | https://sourovdeb.com/wp-json/wp/v2/ | `WP_ZOHO_APP_PASSWORD` | WP application password for user `sourovdeb@zohomail.com` |
+| WP site / REST base | https://sourovdeb.com | `WP_SITE_URL`, `WP_REST_BASE`, `WP_USERNAME` | Site URL, REST base `…/wp-json/wp/v2/`, login `sourovdeb@zohomail.com` |
 | WP account password | https://sourovdeb.com/wp-admin | `WP_ACCOUNT_PASSWORD` | WP admin account password |
 | Easy MCP AI (Design Publisher) | https://sourovdeb.com/wp-json/easy-mcp-ai/v1/mcp | `WP_EASY_MCP_KEY` | MCP endpoint key for design publishing workflows |
 | Deploy gateway | https://www.sourovdeb.com/deploy.php | `WP_DEPLOY_GATEWAY_URL` | Deploy endpoint with key query param |
@@ -49,6 +50,7 @@ This file intentionally contains **no secret values**.
 |---|---|---|---|
 | France Travail API | https://api.francetravail.io | `FRANCE_TRAVAIL_CLIENT_ID`, `FRANCE_TRAVAIL_LEGACY_CLIENT_ID`, `FRANCE_TRAVAIL_LEGACY_CLIENT_SECRET` | App `Automation_de_rechereche_demploi`; current secret also stored in Apps Script / Emploi Store dashboard |
 | Referent contact | — | `FRANCE_TRAVAIL_REFERENT` | Advisor email (francetravail.net) |
+| France Travail app name | — | `FRANCE_TRAVAIL_APP` | `Automation_de_rechereche_demploi` |
 
 ## Agnes AI
 
@@ -84,10 +86,15 @@ This file intentionally contains **no secret values**.
 
 | Service | URL | Key / Secret name | Description |
 |---|---|---|---|
-| Z.AI Coding (Global) | https://api.z.ai/api/coding/paas/v4 | `ZAI_API_KEY` | Endpoint `coding-global`, model `glm-5.3`, key hash `ae5ca0f7c0a88d61` |
-| GitHub Copilot API | https://api.githubcopilot.com | `GITHUB_TOKEN` (env) | Credential-pool entry, fingerprint sha256:0ceb5a5457e426ed |
-| OpenCode GO | https://opencode.ai/zen/go/v1 | `OPENCODE_GO_API_KEY` (env) | Credential-pool entry, fingerprint sha256:2b2b5f3075cd75e2 |
-| OpenRouter | https://openrouter.ai/api/v1 | `OPENROUTER_API_KEY` (env) | Credential-pool entry |
+| Z.AI Coding (Global) | https://api.z.ai/api/coding/paas/v4 | `ZAI_API_KEY` (env; **value not present in uploads** — fingerprint sha256:ae5ca0f7c0a88d61 only) | Endpoint `coding-global`, model `glm-5.3` |
+| GitHub Copilot API | https://api.githubcopilot.com | `GITHUB_TOKEN` (env; **value not present in uploads** — fingerprint sha256:0ceb5a5457e426ed only) | Credential-pool entry |
+| OpenCode GO | https://opencode.ai/zen/go/v1 | `OPENCODE_GO_API_KEY` (env; **value not present in uploads** — fingerprint sha256:2b2b5f3075cd75e2 only) | Credential-pool entry |
+| OpenRouter | https://openrouter.ai/api/v1 | `OPENROUTER_API_KEY` (env; **value not present in uploads** — fingerprint sha256:f2aee9ccaf3eb9f7 only) | Credential-pool entry |
+
+## Other notes
+
+- `TEMP_PASSWORD_PATTERN` — reusable personal password pattern (`0767044896vanessaThevenet_` / `0767044896thevenet_`); treat as a credential, rotate everywhere it appears.
+- Hermes profile configs: `~/.hermes/profiles/*/config.yaml` (`mcp_servers.skyvern`) — see MCP_TOOLS.md.
 
 ## Bulk data (GitHub secrets only — never committed)
 
