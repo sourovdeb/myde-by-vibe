@@ -1,5 +1,6 @@
 const http = require('http');
 const url = require('url');
+const crypto = require('crypto');
 const { spawn } = require('child_process');
 const dotenv = require('dotenv');
 
@@ -8,6 +9,15 @@ dotenv.config({ path: __dirname + '/.env' });
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '0.0.0.0';
 const BROWSER_HARNESS = process.env.BROWSER_HARNESS || 'browser-harness';
+
+// Session store for MCP Streamable HTTP transport
+const sessions = new Map();
+
+function createSession() {
+  const id = crypto.randomUUID();
+  sessions.set(id, { createdAt: Date.now(), initialized: false });
+  return id;
+}
 
 // Helper to execute browser-harness commands by spawning process and writing to stdin
 function runBrowserHarness(script) {
@@ -153,7 +163,9 @@ function handleJsonRpc(request) {
     try {
       switch (method) {
         case 'initialize':
-          return { jsonrpc: '2.0', id, result: { protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'browser-control-mcp', version: '1.0.0' } } };
+          return { jsonrpc: '2.0', id, result: { protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'browser-control-mcp', version: '1.0.0' } } };
+        case 'notifications/initialized':
+          return null; // Notification, no response needed
         case 'tools/list':
           return { jsonrpc: '2.0', id, result: { tools: TOOLS } };
         case 'tools/call': {
@@ -177,8 +189,9 @@ function handleJsonRpc(request) {
 
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id, Last-Event-ID');
+  res.setHeader('Access-Control-Expose-Headers', 'Mcp-Session-Id');
   
   if (req.method === 'OPTIONS') { res.writeHead(200); res.end(); return; }
   
@@ -202,14 +215,79 @@ const server = http.createServer(async (req, res) => {
     req.on('end', async () => {
       try {
         const request = JSON.parse(body);
-        const response = await handleJsonRpc(request);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(response));
+        const sessionId = req.headers['mcp-session-id'];
+        
+        // Handle batch requests
+        const requests = Array.isArray(request) ? request : [request];
+        const responses = [];
+        
+        for (const reqItem of requests) {
+          const response = await handleJsonRpc(reqItem);
+          if (response !== null) {
+            responses.push(response);
+          }
+        }
+        
+        // For initialize, create a new session
+        let newSessionId = null;
+        if (requests.some(r => r.method === 'initialize')) {
+          newSessionId = createSession();
+        }
+        
+        const headers = { 'Content-Type': 'application/json' };
+        if (newSessionId) {
+          headers['Mcp-Session-Id'] = newSessionId;
+        }
+        
+        const responseBody = Array.isArray(request) 
+          ? JSON.stringify(responses) 
+          : JSON.stringify(responses[0] || { jsonrpc: '2.0', id: null, result: {} });
+        
+        res.writeHead(200, headers);
+        res.end(responseBody);
       } catch (error) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error', data: error.message } }));
       }
     });
+    return;
+  }
+  
+  // GET /mcp - SSE stream endpoint (Streamable HTTP transport)
+  if (pathname === '/mcp' && req.method === 'GET') {
+    const sessionId = req.headers['mcp-session-id'];
+    if (!sessionId || !sessions.has(sessionId)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32000, message: 'Invalid or missing session ID' } }));
+      return;
+    }
+    // Set up SSE stream
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.write('event: endpoint\ndata: /mcp\n\n');
+    // Keep connection alive
+    const keepAlive = setInterval(() => {
+      res.write(': keepalive\n\n');
+    }, 30000);
+    req.on('close', () => {
+      clearInterval(keepAlive);
+      sessions.delete(sessionId);
+    });
+    return;
+  }
+  
+  // DELETE /mcp - terminate session
+  if (pathname === '/mcp' && req.method === 'DELETE') {
+    const sessionId = req.headers['mcp-session-id'];
+    if (sessionId) {
+      sessions.delete(sessionId);
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'session terminated' }));
     return;
   }
   
