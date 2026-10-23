@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Particle Field — Interactive Canvas</title>
+<style>
+  #field { position: fixed; inset: 0; display: block; touch-action: none; cursor: crosshair; background: #050510; z-index: 1; }
+  #hud {
+    position: fixed; top: 14px; left: 14px; z-index: 10;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    background: rgba(10, 10, 25, 0.72); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
+    padding: 12px 14px; color: #e8e8f5;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 13px; max-width: min(720px, calc(100vw - 28px));
+    user-select: none;
+  }
+  #hud .ctl { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
+  #hud .ctl label { font-size: 11px; letter-spacing: 0.4px; opacity: 0.75; text-transform: uppercase; }
+  #hud input[type=range] { width: 130px; accent-color: #7c6cf7; cursor: pointer; }
+  #hud .val { font-variant-numeric: tabular-nums; font-weight: 600; color: #b9a6ff; }
+  #hud button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    color: #e8e8f5; background: rgba(124,108,247,0.25);
+    border: 1px solid rgba(124,108,247,0.6); border-radius: 9px;
+    padding: 8px 13px; transition: background 0.15s, transform 0.1s;
+  }
+  #hud button:hover { background: rgba(124,108,247,0.5); }
+  #hud button:active { transform: scale(0.96); }
+  #hud .swatches { display: flex; gap: 6px; align-items: center; }
+  #hud .sw {
+    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.25); transition: transform 0.12s, border-color 0.12s;
+  }
+  #hud .sw:hover { transform: scale(1.15); }
+  #hud .sw.active { border-color: #fff; transform: scale(1.12); }
+  #tip {
+    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
+    color: rgba(232,232,245,0.45); font-family: system-ui, sans-serif; font-size: 12px;
+    pointer-events: none; z-index: 10; letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+<canvas id="field"></canvas>
+<div id="hud">
+  <div class="ctl">
+    <label>Particles <span class="val" id="countVal">900</span></label>
+    <input type="range" id="count" min="100" max="3000" step="50" value="900" />
+  </div>
+  <div class="ctl">
+    <label>Force <span class="val" id="forceVal">1.0</span></label>
+    <input type="range" id="force" min="0" max="3" step="0.1" value="1" />
+  </div>
+  <div class="ctl">
+    <label>Swirl <span class="val" id="swirlVal">1.0</span></label>
+    <input type="range" id="swirl" min="0" max="2.5" step="0.1" value="1" />
+  </div>
+  <div class="ctl swatches">
+    <label>Background</label>
+    <div class="sw active" data-bg="#050510" style="background:#050510" title="Midnight"></div>
+    <div class="sw" data-bg="#000000" style="background:#000000" title="Black"></div>
+    <div class="sw" data-bg="#101d2e" style="background:#101d2e" title="Deep sea"></div>
+    <div class="sw" data-bg="#1d0f2e" style="background:#1d0f2e" title="Violet night"></div>
+    <div class="sw" data-bg="#f4f4fa" style="background:#f4f4fa" title="Paper"></div>
+  </div>
+  <button id="reset">Reset field</button>
+  <button id="clear">Clear trails</button>
+  <button id="shot">Save screenshot</button>
+</div>
+<div id="tip">Move the pointer to swirl the field — hold down to pull harder</div>
+<script>
+(function () {
+  const canvas = document.getElementById("field");
+  const ctx = canvas.getContext("2d");
+  const DPR = Math.min(window.devicePixelRatio || 1, 2);
+  let W = 0, H = 0;
+  let particles = [];
+  let bg = "#050510";
+  let lightBg = false;
+  const state = { count: 900, force: 1.0, swirl: 1.0 };
+  const pointer = { x: 0, y: 0, px: 0, py: 0, active: false, down: false, vx: 0, vy: 0 };
+
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    paintBg(1);
+  }
+  function paintBg(alpha) {
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalAlpha = 1;
+  }
+  function spawn(n) {
+    for (let i = 0; i < n; i++) {
+      particles.push({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: 0, vy: 0, hue: Math.random() * 360,
+        size: 0.6 + Math.random() * 1.8,
+        seed: Math.random() * Math.PI * 2
+      });
+    }
+  }
+  function rebuild(newCount) {
+    const cur = particles.length;
+    if (newCount > cur) spawn(newCount - cur);
+    else if (newCount < cur) particles.length = newCount;
+  }
+  function step(now) {
+    const t = now * 0.001;
+    paintBg(lightBg ? 0.10 : 0.075);
+    pointer.vx = pointer.x - pointer.px;
+    pointer.vy = pointer.y - pointer.py;
+    pointer.px = pointer.x; pointer.py = pointer.y;
+    ctx.globalCompositeOperation = lightBg ? "source-over" : "lighter";
+    const boost = pointer.down ? 2.6 : 1;
+    const F = state.force * boost;
+    const S = state.swirl;
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (pointer.active) {
+        const dx = pointer.x - p.x;
+        const dy = pointer.y - p.y;
+        const d2 = dx * dx + dy * dy + 2400;
+        const d = Math.sqrt(d2);
+        const inv = 1 / d;
+        const pull = F * 3200 / d2;
+        const tang = S * 2600 / d2;
+        p.vx += dx * inv * pull * 60 * 0.016;
+        p.vy += dy * inv * pull * 60 * 0.016;
+        p.vx += -dy * inv * tang * 60 * 0.016;
+        p.vy +=  dx * inv * tang * 60 * 0.016;
+        const drag = Math.min(1, 900 / d2);
+        p.vx += pointer.vx * drag * 0.35;
+        p.vy += pointer.vy * drag * 0.35;
+        const prox = Math.max(0, 1 - d / 460);
+        p.hue += 0.25 + prox * 5;
+      } else {
+        p.hue += 0.25;
+        p.vx += Math.sin(t * 0.7 + p.y * 0.004 + p.seed) * 0.02;
+        p.vy += Math.cos(t * 0.6 + p.x * 0.004 + p.seed) * 0.02;
+      }
+      p.vx += Math.sin(p.y * 0.006 + t * 0.4) * 0.018 * S;
+      p.vy += Math.cos(p.x * 0.006 + t * 0.4) * 0.018 * S;
+      p.vx *= 0.965; p.vy *= 0.965;
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10) p.x = W + 10; else if (p.x > W + 10) p.x = -10;
+      if (p.y < -10) p.y = H + 10; else if (p.y > H + 10) p.y = -10;
+      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      const alpha = Math.min(0.9, 0.15 + speed * 0.09);
+      const light = 55 + Math.min(25, speed * 4);
+      ctx.beginPath();
+      ctx.strokeStyle = "hsla(" + (p.hue % 360) + ", 85%, " + (lightBg ? 38 : light) + "%, " + alpha + ")";
+      ctx.lineWidth = p.size;
+      ctx.moveTo(p.x - p.vx * 2.2, p.y - p.vy * 2.2);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+    ctx.globalCompositeOperation = "source-over";
+    requestAnimationFrame(step);
+  }
+  function setPointer(e) {
+    pointer.x = e.clientX; pointer.y = e.clientY;
+    if (!pointer.active) { pointer.px = pointer.x; pointer.py = pointer.y; pointer.active = true; }
+  }
+  window.addEventListener("pointermove", setPointer, { passive: true });
+  window.addEventListener("pointerdown", function (e) { if (e.target === canvas) { pointer.down = true; setPointer(e); } }, { passive: true });
+  window.addEventListener("pointerup", function () { pointer.down = false; }, { passive: true });
+  window.addEventListener("pointerleave", function () { pointer.active = false; pointer.down = false; });
+  canvas.addEventListener("pointerdown", function () { paintBg(1); }, { passive: true });
+  const bind = function (id, valId, key, fmt) {
+    const el = document.getElementById(id), out = document.getElementById(valId);
+    el.addEventListener("input", function () {
+      const v = parseFloat(el.value);
+      state[key] = v;
+      out.textContent = fmt(v);
+      if (key === "count") rebuild(Math.round(v));
+    });
+  };
+  bind("count", "countVal", "count", function (v) { return Math.round(v); });
+  bind("force", "forceVal", "force", function (v) { return v.toFixed(1); });
+  bind("swirl", "swirlVal", "swirl", function (v) { return v.toFixed(1); });
+  document.querySelectorAll("#hud .sw").forEach(function (s) {
+    s.addEventListener("click", function () {
+      document.querySelectorAll("#hud .sw").forEach(function (x) { x.classList.remove("active"); });
+      s.classList.add("active");
+      bg = s.dataset.bg;
+      lightBg = bg === "#f4f4fa";
+      paintBg(1);
+    });
+  });
+  document.getElementById("reset").addEventListener("click", function () {
+    particles = [];
+    spawn(state.count);
+    paintBg(1);
+  });
+  document.getElementById("clear").addEventListener("click", function () { paintBg(1); });
+  document.getElementById("shot").addEventListener("click", function () {
+    const a = document.createElement("a");
+    a.download = "particle-field-" + Date.now() + ".png";
+    a.href = canvas.toDataURL("image/png");
+    a.click();
+  });
+  window.addEventListener("resize", function () { resize(); });
+  resize();
+  spawn(state.count);
+  requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
