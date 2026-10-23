@@ -85,13 +85,34 @@ curl -X POST http://localhost:3001/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"browser_list_tabs","arguments":{}}}'
 ```
 
-### 4. Add to Mistral AI
+### 4. Expose to Mistral AI Cloud (via Cloudflare Tunnel)
+
+`localhost:3001` is NOT reachable from Mistral AI cloud. You need a tunnel:
+
+```bash
+# Start Cloudflare Tunnel (one-time download: cloudflared.exe)
+nohup /c/tmp/cloudflared.exe tunnel --url http://localhost:3001 > /c/tmp/cf-3001.log 2>&1 &
+# Note the URL from the log, e.g.:
+# https://cashiers-cheap-membership-chapel.trycloudflare.com
+```
+
+### 5. Add to Mistral AI
 
 Go to: https://chat.mistral.ai/connections/marketplace
 
 - **Connector name**: `Browser Control MCP`
-- **Server**: `http://localhost:3001/mcp`
+- **Server**: `https://<tunnel-url>.trycloudflare.com/mcp` (NOT localhost)
 - **Authentication**: None
+
+**GOTCHA:** The "Auto-detect" and "Add connector" buttons appear disabled even with valid input. Force-click via browser JS:
+```javascript
+const btn = Array.from(document.querySelectorAll('button')).find(b => b.innerText.includes('Auto-detect'));
+btn.disabled = false; btn.click();
+```
+
+**GOTCHA:** Tunnel URLs are ephemeral — they change when cloudflared restarts. Update the connector URL after every restart.
+
+See `docs/MCP-CONNECTOR-GUIDELINES.md` in the GitHub repo for the full setup guide.
 
 ## Requirements
 
