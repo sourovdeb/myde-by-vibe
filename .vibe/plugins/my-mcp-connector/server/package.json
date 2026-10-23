@@ -1,0 +1,27 @@
+{
+  "name": "my-mcp-connector-server",
+  "version": "1.0.0",
+  "description": "MCP Server for Sourov's workflow automation",
+  "main": "http-server.js",
+  "scripts": {
+    "start": "node http-server.js",
+    "dev": "node http-server.js",
+    "stdio": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.6.0",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "workflow",
+    "automation",
+    "http"
+  ],
+  "author": "Sourov",
+  "license": "MIT"
+}

@@ -1,0 +1,30 @@
+{
+  "name": "my-mcp-connector",
+  "version": "1.0.0",
+  "description": "A custom MCP server connector for Sourov's workflows",
+  "main": "server/http-server.js",
+  "scripts": {
+    "start": "node server/http-server.js",
+    "dev": "node server/http-server.js",
+    "stdio": "node server/index.js",
+    "install-deps": "cd server && npm install",
+    "test": "curl -s http://localhost:3000/health"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "workflow",
+    "automation",
+    "vibe-plugin"
+  ],
+  "author": "Sourov",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sourovdeb/myde-by-vibe.git"
+  },
+  "homepage": "https://github.com/sourovdeb/myde-by-vibe",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

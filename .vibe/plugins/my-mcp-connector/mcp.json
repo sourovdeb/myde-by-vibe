@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "my-mcp-connector": {
+      "name": "my-mcp-connector",
+      "version": "1.0.0",
+      "description": "Custom MCP server for Sourov's workflow automation",
+      "transport": "http",
+      "url": "http://localhost:3000/mcp",
+      "healthEndpoint": "http://localhost:3000/health",
+      "command": "node",
+      "args": ["${pluginDir}/server/http-server.js"],
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000",
+        "HOST": "0.0.0.0"
+      }
+    }
+  }
+}

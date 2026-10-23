@@ -1,0 +1,52 @@
+{
+  "connectors": [
+    {
+      "id": "my-mcp-connector",
+      "name": "My Custom MCP Connector",
+      "description": "Custom MCP server connector for Sourov's workflows",
+      "server": "http://localhost:3000/mcp",
+      "transport": "http",
+      "protocol": "json-rpc",
+      "protocolVersion": "2024-11-05",
+      "authentication": {
+        "type": "none"
+      },
+      "endpoints": {
+        "mcp": "/mcp",
+        "health": "/health"
+      },
+      "tools": [
+        {
+          "name": "health_check",
+          "description": "Verify server is alive and responding",
+          "parameters": {},
+          "returns": "{ status: string, version: string, timestamp: string }"
+        },
+        {
+          "name": "system_info",
+          "description": "Get system resources and environment information",
+          "parameters": {},
+          "returns": "{ os: string, node: string, uptime: number, memory: object }"
+        },
+        {
+          "name": "one_stop_shop_status",
+          "description": "Check ONE-STOP-SHOP pipeline folders and status",
+          "parameters": {},
+          "returns": "{ status: string, folders: array, lastChecked: string }"
+        },
+        {
+          "name": "credential_env_present",
+          "description": "List environment variables and check for credentials",
+          "parameters": {},
+          "returns": "{ variables: array, found: array, missing: array, count: object }"
+        },
+        {
+          "name": "vibe_skill_list",
+          "description": "List installed Vibe skills",
+          "parameters": {},
+          "returns": "{ skills: array, total: number }"
+        }
+      ]
+    }
+  ]
+}
