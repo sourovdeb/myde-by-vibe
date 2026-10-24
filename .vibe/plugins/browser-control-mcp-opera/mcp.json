@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "browser-control-mcp-opera": {
+      "type": "streamable-http",
+      "url": "http://localhost:3002/mcp",
+      "description": "Browser control MCP server for Opera automation via CDP"
+    }
+  }
+}

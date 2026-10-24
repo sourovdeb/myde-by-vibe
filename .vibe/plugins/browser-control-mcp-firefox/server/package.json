@@ -1,0 +1,29 @@
+{
+  "name": "browser-control-mcp-firefox-server",
+  "version": "1.0.0",
+  "description": "Browser Control MCP Server - HTTP server for Firefox automation via WebDriver",
+  "main": "http-server.js",
+  "scripts": {
+    "start": "node http-server.js",
+    "dev": "node http-server.js",
+    "install-geckodriver": "node install-geckodriver.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "selenium-webdriver": "^4.18.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "browser",
+    "firefox",
+    "webdriver",
+    "geckodriver",
+    "selenium",
+    "automation"
+  ],
+  "author": "Sourov",
+  "license": "MIT"
+}
