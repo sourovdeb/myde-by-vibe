@@ -1,0 +1,25 @@
+{
+  "name": "browser-control-mcp-server",
+  "version": "1.0.0",
+  "description": "Browser Control MCP Server - HTTP server for Chrome automation via CDP",
+  "main": "http-server.js",
+  "scripts": {
+    "start": "node http-server.js",
+    "dev": "node http-server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "browser",
+    "chrome",
+    "cdp",
+    "automation"
+  ],
+  "author": "Sourov",
+  "license": "MIT"
+}

@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "connectors": [
+    {
+      "id": "browser-control-mcp-firefox",
+      "tools": [
+        "firefox_list_tabs",
+        "firefox_new_tab",
+        "firefox_switch_tab",
+        "firefox_close_tab",
+        "firefox_navigate",
+        "firefox_get_page_info",
+        "firefox_screenshot",
+        "firefox_execute_js",
+        "firefox_click",
+        "firefox_type",
+        "firefox_get_dom",
+        "firefox_scroll",
+        "firefox_wait_for_element",
+        "firefox_get_element_text",
+        "firefox_handle_dialog"
+      ]
+    }
+  ]
+}

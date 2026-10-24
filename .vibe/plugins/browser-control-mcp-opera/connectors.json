@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "connectors": [
+    {
+      "id": "browser-control-mcp-opera",
+      "tools": [
+        "opera_list_tabs",
+        "opera_new_tab",
+        "opera_switch_tab",
+        "opera_close_tab",
+        "opera_navigate",
+        "opera_get_page_info",
+        "opera_screenshot",
+        "opera_execute_js",
+        "opera_click",
+        "opera_type",
+        "opera_get_dom",
+        "opera_scroll",
+        "opera_wait_for_element",
+        "opera_get_element_text",
+        "opera_handle_dialog"
+      ]
+    }
+  ]
+}

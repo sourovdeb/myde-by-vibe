@@ -1,0 +1,10 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "browser-control-mcp-firefox": {
+      "type": "streamable-http",
+      "url": "http://localhost:3003/mcp",
+      "description": "Browser control MCP server for Firefox automation via WebDriver"
+    }
+  }
+}

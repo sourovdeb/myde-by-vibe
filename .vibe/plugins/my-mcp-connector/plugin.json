@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "name": "my-mcp-connector",
+  "displayName": "My Custom MCP Connector",
+  "description": "A custom MCP server connector for Sourov's workflows",
+  "version": "1.0.0",
+  "author": "Sourov",
+  "license": "MIT",
+  "homepage": "https://github.com/sourovdeb/myde-by-vibe",
+  "repository": "https://github.com/sourovdeb/myde-by-vibe",
+  "type": "plugin",
+  "capabilities": [
+    "mcpServer",
+    "connectorDefinition"
+  ],
+  "mcpServer": {
+    "name": "my-mcp-connector",
+    "version": "1.0.0",
+    "description": "Custom MCP server for workflow automation",
+    "transport": "http",
+    "entryPoint": "server/http-server.js",
+    "port": 3000,
+    "host": "0.0.0.0"
+  },
+  "connectors": [
+    {
+      "id": "my-mcp-connector",
+      "name": "My Custom MCP Connector",
+      "description": "Custom MCP server connector for Sourov's workflows",
+      "serverUrl": "http://localhost:3000/mcp",
+      "transport": "http",
+      "authentication": {
+        "type": "none"
+      },
+      "tools": [
+        "health_check",
+        "system_info",
+        "one_stop_shop_status",
+        "credential_env_present",
+        "vibe_skill_list"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "name": "workflow-tools",
+      "path": "skills/workflow-tools/SKILL.md"
+    }
+  ],
+  "documentation": {
+    "readme": "README.md",
+    "manual": "docs/MANUAL.md",
+    "guide": "docs/GUIDE.md",
+    "futureUpdates": "docs/FUTURE-UPDATES.md"
+  }
+}

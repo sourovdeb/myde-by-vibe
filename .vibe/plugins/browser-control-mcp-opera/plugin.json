@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "browser-control-mcp-opera",
+  "version": "1.0.0",
+  "description": "Browser control MCP server - allows Mistral AI to control local Opera browser via CDP",
+  "author": {
+    "name": "Sourov",
+    "email": "sourov@example.com",
+    "url": "https://sourovdeb.com"
+  },
+  "homepage": "https://github.com/sourovdeb/myde-by-vibe",
+  "repository": "https://github.com/sourovdeb/myde-by-vibe",
+  "license": "MIT",
+  "keywords": ["browser", "opera", "cdp", "automation", "mcp", "control", "chromium"],
+  "extensions": {
+    "ai.mistral.vibe": {
+      "schemaVersion": 1,
+      "displayName": "Browser Control MCP (Opera)",
+      "toolNamespace": "browserControlOpera"
+    }
+  }
+}
