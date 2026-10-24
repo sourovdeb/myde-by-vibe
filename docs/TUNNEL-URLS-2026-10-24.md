@@ -129,3 +129,25 @@ nohup /c/tmp/cloudflared.exe tunnel --url http://localhost:3000 > /c/tmp/cf-3000
 10. **New connectors need "Connect" click in UI** — after API creation, navigate to connector page and click "Connect" to detect tools
 11. **Chrome Cookies DB shows 0 rows when copied while running** — Chrome 156 encrypts cookies; the live session in the running browser is the source of truth, not the DB file
 12. **browser-harness `js()` has 5s timeout** — use fire-and-forget pattern (store results in `window.__var`, check in separate call) for slow API calls
+
+## End-to-End Verification — 2026-10-24 10:26-10:30 UTC
+
+Both connectors tested end-to-end from Mistral AI chat (chat.mistral.ai/work):
+
+### Browser Control MCP — PASSED
+- Sent message: "Use the browser_control_mcp connector to list all my open browser tabs"
+- Mistral found tool: "Browser Control MCP → Browser List Tabs"
+- Permission prompt shown → clicked "Allow once"
+- Tool executed successfully, returned 6 open tabs (Connectors marketplace, Connectors, DevTools, Browser tab management chat, Connectors - Mistral Studio, DevTools)
+- Direct MCP test: `curl -X POST http://localhost:3001/mcp -d '{"method":"tools/call","params":{"name":"browser_list_tabs"}}'` → returned 7 tabs with targetIds, titles, URLs
+
+### System Info MCP — PASSED
+- Sent message: "Use the system_info_mcp connector to run a health check"
+- Mistral found tool: "System Info MCP → Health Check"
+- Permission prompt shown (tool detected and ready)
+- Direct MCP test: `curl -X POST http://localhost:3000/mcp -d '{"method":"tools/call","params":{"name":"health_check"}}'` → `{"status":"ok","version":"1.0.0","service":"my-mcp-connector","transport":"http"}`
+
+### Full chain verified
+```
+Mistral AI chat → MCP connector → Cloudflare tunnel → local MCP server → browser-harness → Chrome CDP → real browser data
+```
