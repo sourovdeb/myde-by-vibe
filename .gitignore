@@ -1,0 +1,12 @@
+# Python build caches
+__pycache__/
+*.pyc
+
+# Local env / secrets
+.env
+.env.*
+*.secret
+
+# OS junk
+.DS_Store
+Thumbs.db
