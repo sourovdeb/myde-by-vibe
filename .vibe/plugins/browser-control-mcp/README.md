@@ -27,7 +27,7 @@ Control your local Chrome browser through MCP (Model Context Protocol). This plu
 
 ## Features
 
-- ✅ 12 browser control tools
+- ✅ 15 browser control tools
 - ✅ HTTP MCP server (port 3001)
 - ✅ JSON-RPC 2.0 protocol
 - ✅ CORS enabled
@@ -51,6 +51,9 @@ Control your local Chrome browser through MCP (Model Context Protocol). This plu
 | `browser_type` | Type text |
 | `browser_get_dom` | Get HTML content |
 | `browser_scroll` | Scroll the page |
+| `browser_wait_for_element` | Wait for a CSS selector to appear (with timeout) |
+| `browser_get_element_text` | Get text, HTML, and attributes of an element |
+| `browser_handle_dialog` | Handle JS alert/confirm/prompt dialogs |
 
 ## Quick Start
 

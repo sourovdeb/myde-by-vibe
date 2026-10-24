@@ -17,6 +17,9 @@ allowed-tools:
   - browser_type
   - browser_get_dom
   - browser_scroll
+  - browser_wait_for_element
+  - browser_get_element_text
+  - browser_handle_dialog
 ---
 
 # Browser Control MCP
@@ -56,6 +59,14 @@ Control your local Chrome browser through MCP tools. This skill provides 12 tool
 | `browser_screenshot` | Take screenshot | `path` (required) |
 | `browser_execute_js` | Execute JavaScript | `code` (required) |
 | `browser_get_dom` | Get HTML content | `selector` (optional) |
+
+### Advanced
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `browser_wait_for_element` | Wait for a CSS selector to appear | `selector` (required), `timeout_ms` (optional, default 10000) |
+| `browser_get_element_text` | Get text, HTML, and attributes of an element | `selector` (required) |
+| `browser_handle_dialog` | Handle JS alert/confirm/prompt dialogs | `action` (required: accept/dismiss), `prompt_text` (optional) |
 
 ## Examples
 

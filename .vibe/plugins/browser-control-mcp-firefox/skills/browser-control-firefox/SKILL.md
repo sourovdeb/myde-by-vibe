@@ -17,6 +17,9 @@ allowed-tools:
   - firefox_type
   - firefox_get_dom
   - firefox_scroll
+  - firefox_wait_for_element
+  - firefox_get_element_text
+  - firefox_handle_dialog
 ---
 
 # Browser Control MCP (Firefox)
@@ -56,6 +59,14 @@ Control your local Firefox browser through MCP tools. Firefox uses the WebDriver
 | `firefox_screenshot` | Take screenshot | `path` (required) |
 | `firefox_execute_js` | Execute JavaScript | `code` (required) |
 | `firefox_get_dom` | Get HTML content | `selector` (optional) |
+
+### Advanced
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `firefox_wait_for_element` | Wait for a CSS selector to appear | `selector` (required), `timeout_ms` (optional, default 10000) |
+| `firefox_get_element_text` | Get text, HTML, and attributes of an element | `selector` (required) |
+| `firefox_handle_dialog` | Handle JS alert/confirm/prompt dialogs | `action` (required: accept/dismiss), `prompt_text` (optional) |
 
 ## Examples
 

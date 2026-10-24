@@ -15,7 +15,10 @@
         "browser_click",
         "browser_type",
         "browser_get_dom",
-        "browser_scroll"
+        "browser_scroll",
+        "browser_wait_for_element",
+        "browser_get_element_text",
+        "browser_handle_dialog"
       ]
     }
   ]

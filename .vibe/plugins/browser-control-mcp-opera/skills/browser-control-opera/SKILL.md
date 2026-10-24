@@ -17,6 +17,9 @@ allowed-tools:
   - opera_type
   - opera_get_dom
   - opera_scroll
+  - opera_wait_for_element
+  - opera_get_element_text
+  - opera_handle_dialog
 ---
 
 # Browser Control MCP (Opera)
@@ -56,6 +59,14 @@ Control your local Opera browser through MCP tools. Opera is Chromium-based and 
 | `opera_screenshot` | Take screenshot | `path` (required) |
 | `opera_execute_js` | Execute JavaScript | `code` (required) |
 | `opera_get_dom` | Get HTML content | `selector` (optional) |
+
+### Advanced
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `opera_wait_for_element` | Wait for a CSS selector to appear | `selector` (required), `timeout_ms` (optional, default 10000) |
+| `opera_get_element_text` | Get text, HTML, and attributes of an element | `selector` (required) |
+| `opera_handle_dialog` | Handle JS alert/confirm/prompt dialogs | `action` (required: accept/dismiss), `prompt_text` (optional) |
 
 ## Examples
 

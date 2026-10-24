@@ -22,7 +22,7 @@ Control your local Opera browser through MCP (Model Context Protocol). Opera is 
 
 ## Features
 
-- 12 browser control tools (same interface as Chrome variant)
+- 15 browser control tools (same interface as Chrome variant)
 - Self-contained CDP WebSocket client (no browser-harness dependency)
 - Auto-launches Opera with remote debugging if not running
 - HTTP MCP server (port 3002)
@@ -46,6 +46,9 @@ Control your local Opera browser through MCP (Model Context Protocol). Opera is 
 | `opera_type` | Type text |
 | `opera_get_dom` | Get HTML content |
 | `opera_scroll` | Scroll the page |
+| `opera_wait_for_element` | Wait for a CSS selector to appear (with timeout) |
+| `opera_get_element_text` | Get text, HTML, and attributes of an element |
+| `opera_handle_dialog` | Handle JS alert/confirm/prompt dialogs |
 
 ## Quick Start
 

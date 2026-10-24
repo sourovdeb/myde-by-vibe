@@ -27,7 +27,7 @@ Control your local Firefox browser through MCP (Model Context Protocol). Firefox
 
 ## Features
 
-- 12 browser control tools (same interface as Chrome/Opera variants)
+- 15 browser control tools (same interface as Chrome/Opera variants)
 - WebDriver protocol via geckodriver + selenium-webdriver
 - Auto-downloads geckodriver on setup
 - Auto-launches Firefox on first tool call
@@ -52,6 +52,9 @@ Control your local Firefox browser through MCP (Model Context Protocol). Firefox
 | `firefox_type` | Type text |
 | `firefox_get_dom` | Get HTML content |
 | `firefox_scroll` | Scroll the page |
+| `firefox_wait_for_element` | Wait for a CSS selector to appear (with timeout) |
+| `firefox_get_element_text` | Get text, HTML, and attributes of an element |
+| `firefox_handle_dialog` | Handle JS alert/confirm/prompt dialogs |
 
 ## Quick Start
 

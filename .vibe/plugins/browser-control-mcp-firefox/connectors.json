@@ -15,7 +15,10 @@
         "firefox_click",
         "firefox_type",
         "firefox_get_dom",
-        "firefox_scroll"
+        "firefox_scroll",
+        "firefox_wait_for_element",
+        "firefox_get_element_text",
+        "firefox_handle_dialog"
       ]
     }
   ]

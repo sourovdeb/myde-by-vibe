@@ -257,6 +257,9 @@ const TOOLS = [
   { name: 'opera_type', description: 'Type text in Opera', inputSchema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] } },
   { name: 'opera_get_dom', description: 'Get HTML content from Opera', inputSchema: { type: 'object', properties: { selector: { type: 'string' } } } },
   { name: 'opera_scroll', description: 'Scroll Opera page', inputSchema: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' } } } },
+  { name: 'opera_wait_for_element', description: 'Wait for a CSS selector to appear on the Opera page within a given timeout', inputSchema: { type: 'object', properties: { selector: { type: 'string', description: 'CSS selector to wait for' }, timeout_ms: { type: 'number', description: 'Maximum time to wait in milliseconds (default 10000)' } }, required: ['selector'] } },
+  { name: 'opera_get_element_text', description: 'Extract the text content, inner HTML, and attributes of a specified element in Opera', inputSchema: { type: 'object', properties: { selector: { type: 'string', description: 'CSS selector for the target element' } }, required: ['selector'] } },
+  { name: 'opera_handle_dialog', description: 'Handle JavaScript alert/confirm/prompt dialogs in Opera by accepting or dismissing them', inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['accept', 'dismiss'], description: 'Whether to accept or dismiss the dialog' }, prompt_text: { type: 'string', description: 'Text to enter if the dialog is a prompt (only used with accept action)' } }, required: ['action'] } },
 ];
 
 async function executeTool(name, args) {
@@ -463,6 +466,54 @@ async function executeTool(name, args) {
         returnByValue: true,
       });
       return { output: 'Scrolled by dx=' + dx + ' dy=' + dy };
+    }
+    
+    case 'opera_wait_for_element': {
+      if (!args.selector) throw new Error('selector is required');
+      const timeoutMs = args.timeout_ms || 10000;
+      await ensureConnected();
+      const start = Date.now();
+      let found = false;
+      let elapsed = 0;
+      const selJson = JSON.stringify(args.selector);
+      while (elapsed < timeoutMs) {
+        const result = await cdpSend('Runtime.evaluate', {
+          expression: 'document.querySelector(' + selJson + ') !== null',
+          returnByValue: true,
+        });
+        if (result.result.value === true) {
+          found = true;
+          break;
+        }
+        await sleep(200);
+        elapsed = Date.now() - start;
+      }
+      return { output: JSON.stringify({ found, selector: args.selector, elapsed_ms: elapsed }) };
+    }
+    
+    case 'opera_get_element_text': {
+      if (!args.selector) throw new Error('selector is required');
+      await ensureConnected();
+      const selJson = JSON.stringify(args.selector);
+      const result = await cdpSend('Runtime.evaluate', {
+        expression: '(() => { const el = document.querySelector(' + selJson + '); if (!el) return JSON.stringify({exists: false, text: "", html: "", attributes: {}}); const attrs = {}; for (let i = 0; i < el.attributes.length; i++) { attrs[el.attributes[i].name] = el.attributes[i].value; } return JSON.stringify({exists: true, text: el.innerText || el.textContent || "", html: el.innerHTML || "", attributes: attrs}); })()',
+        returnByValue: true,
+      });
+      const data = JSON.parse(result.result.value || '{}');
+      return { output: JSON.stringify(data, null, 2) };
+    }
+    
+    case 'opera_handle_dialog': {
+      if (!args.action) throw new Error('action is required (accept or dismiss)');
+      await ensureConnected();
+      const accept = args.action === 'accept';
+      const promptText = args.prompt_text || '';
+      // Override dialog functions to auto-handle
+      await cdpSend('Runtime.evaluate', {
+        expression: '(() => { const accept = ' + accept + '; const pt = ' + JSON.stringify(promptText) + '; window.alert = function() { return undefined; }; window.confirm = function() { return accept; }; window.prompt = function(msg, def) { return accept ? (pt || def || "") : null; }; return JSON.stringify({handled: true, action: accept ? "accept" : "dismiss"}); })()',
+        returnByValue: true,
+      });
+      return { output: JSON.stringify({ handled: true, action: args.action }) };
     }
     
     default:

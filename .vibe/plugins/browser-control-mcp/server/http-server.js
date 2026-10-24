@@ -59,18 +59,21 @@ function runBrowserHarness(script) {
 
 // Tool definitions
 const TOOLS = [
-  { name: 'browser_list_tabs', description: 'List all open browser tabs', inputSchema: { type: 'object', properties: {}, required: [] } },
-  { name: 'browser_new_tab', description: 'Open a new browser tab', inputSchema: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'] } },
-  { name: 'browser_switch_tab', description: 'Switch to a tab', inputSchema: { type: 'object', properties: { target_id: { type: 'string' }, index: { type: 'number' } } } },
-  { name: 'browser_close_tab', description: 'Close a tab', inputSchema: { type: 'object', properties: { target_id: { type: 'string' }, index: { type: 'number' } } } },
-  { name: 'browser_navigate', description: 'Navigate to URL', inputSchema: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'] } },
-  { name: 'browser_get_page_info', description: 'Get current page info', inputSchema: { type: 'object', properties: {}, required: [] } },
-  { name: 'browser_screenshot', description: 'Take screenshot', inputSchema: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } },
-  { name: 'browser_execute_js', description: 'Execute JavaScript', inputSchema: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } },
-  { name: 'browser_click', description: 'Click at coordinates', inputSchema: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' } }, required: ['x', 'y'] } },
-  { name: 'browser_type', description: 'Type text', inputSchema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] } },
-  { name: 'browser_get_dom', description: 'Get HTML content', inputSchema: { type: 'object', properties: { selector: { type: 'string' } } } },
-  { name: 'browser_scroll', description: 'Scroll page', inputSchema: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' } } } }
+  { name: 'browser_list_tabs', description: 'Retrieve a list of all currently open browser tabs with their details', inputSchema: { type: 'object', properties: {}, required: [] } },
+  { name: 'browser_new_tab', description: 'Open a new browser tab and navigate it to a specified URL', inputSchema: { type: 'object', properties: { url: { type: 'string', description: 'The URL to open in the new tab' } }, required: ['url'] } },
+  { name: 'browser_switch_tab', description: 'Switch the active context to a specific browser tab using its ID or index', inputSchema: { type: 'object', properties: { target_id: { type: 'string', description: 'The target ID of the tab to switch to' }, index: { type: 'number', description: 'The zero-based index of the tab to switch to' } } } },
+  { name: 'browser_close_tab', description: 'Close a specific browser tab using its ID or index', inputSchema: { type: 'object', properties: { target_id: { type: 'string', description: 'The target ID of the tab to close' }, index: { type: 'number', description: 'The zero-based index of the tab to close' } } } },
+  { name: 'browser_navigate', description: 'Navigate the current active tab to a specified URL', inputSchema: { type: 'object', properties: { url: { type: 'string', description: 'The URL to navigate to' } }, required: ['url'] } },
+  { name: 'browser_get_page_info', description: 'Retrieve the current page\'s URL, title, and readiness state', inputSchema: { type: 'object', properties: {}, required: [] } },
+  { name: 'browser_screenshot', description: 'Capture a screenshot of the current page and save it to a specified file path', inputSchema: { type: 'object', properties: { path: { type: 'string', description: 'The file path where the screenshot will be saved (e.g. H:/screenshot.png)' } }, required: ['path'] } },
+  { name: 'browser_execute_js', description: 'Execute a provided JavaScript code string in the context of the current page', inputSchema: { type: 'object', properties: { code: { type: 'string', description: 'The JavaScript code to execute' } }, required: ['code'] } },
+  { name: 'browser_click', description: 'Perform a mouse click action at specific x and y coordinates on the page', inputSchema: { type: 'object', properties: { x: { type: 'number', description: 'The x coordinate to click at' }, y: { type: 'number', description: 'The y coordinate to click at' } }, required: ['x', 'y'] } },
+  { name: 'browser_type', description: 'Type a specified text string into the currently focused input element', inputSchema: { type: 'object', properties: { text: { type: 'string', description: 'The text to type' } }, required: ['text'] } },
+  { name: 'browser_get_dom', description: 'Retrieve the HTML content of the entire page or a specific element', inputSchema: { type: 'object', properties: { selector: { type: 'string', description: 'CSS selector for a specific element (optional, returns full page if omitted)' } } } },
+  { name: 'browser_scroll', description: 'Scroll the current page by a specified number of x and y pixels', inputSchema: { type: 'object', properties: { x: { type: 'number', description: 'Horizontal scroll amount in pixels (default 0)' }, y: { type: 'number', description: 'Vertical scroll amount in pixels (default 500)' } } } },
+  { name: 'browser_wait_for_element', description: 'Wait for an element matching a CSS selector to appear on the page within a given timeout', inputSchema: { type: 'object', properties: { selector: { type: 'string', description: 'CSS selector to wait for' }, timeout_ms: { type: 'number', description: 'Maximum time to wait in milliseconds (default 10000)' } }, required: ['selector'] } },
+  { name: 'browser_get_element_text', description: 'Extract the text content, inner HTML, and attributes of a specified element', inputSchema: { type: 'object', properties: { selector: { type: 'string', description: 'CSS selector for the target element' } }, required: ['selector'] } },
+  { name: 'browser_handle_dialog', description: 'Handle JavaScript alert/confirm/prompt dialogs by accepting or dismissing them', inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['accept', 'dismiss'], description: 'Whether to accept or dismiss the dialog' }, prompt_text: { type: 'string', description: 'Text to enter if the dialog is a prompt (only used with accept action)' } }, required: ['action'] } }
 ];
 
 async function executeTool(name, args) {
@@ -139,6 +142,59 @@ async function executeTool(name, args) {
       var scrollDy = args.y || 500;
       script = 'js("window.scrollBy(' + scrollDx + ', ' + scrollDy + ')")\nprint("Scrolled by dx=" + str(' + scrollDx + ') + " dy=" + str(' + scrollDy + ') + ")")';
       break;
+    case 'browser_wait_for_element': {
+      if (!args.selector) throw new Error('selector is required');
+      var timeoutMs = args.timeout_ms || 10000;
+      // Inject selector as JSON (valid Python string literal), parse in Python
+      var selJson = JSON.stringify(args.selector);
+      script = [
+        'import json, time',
+        'selector = json.loads(' + JSON.stringify(selJson) + ')',
+        'timeout_ms = ' + timeoutMs,
+        'start = time.time()',
+        'found = False',
+        'elapsed = 0',
+        'js_expr = "document.querySelector(" + json.dumps(selector) + ") !== null"',
+        'while elapsed < timeout_ms:',
+        '    result = js(js_expr)',
+        '    if result:',
+        '        found = True',
+        '        break',
+        '    time.sleep(0.2)',
+        '    elapsed = int((time.time() - start) * 1000)',
+        'print(json.dumps({"found": found, "selector": selector, "elapsed_ms": elapsed}))'
+      ].join('\n');
+      break;
+    }
+    case 'browser_get_element_text': {
+      if (!args.selector) throw new Error('selector is required');
+      var selJson2 = JSON.stringify(args.selector);
+      script = [
+        'import json',
+        'selector = json.loads(' + JSON.stringify(selJson2) + ')',
+        'js_code = "(() => { const el = document.querySelector(" + json.dumps(selector) + "); if (!el) return JSON.stringify({exists: false, text: \\"\\", html: \\"\\", attributes: {}}); const attrs = {}; for (let i = 0; i < el.attributes.length; i++) { attrs[el.attributes[i].name] = el.attributes[i].value; } return JSON.stringify({exists: true, text: el.innerText || el.textContent || \\"\\", html: el.innerHTML || \\"\\", attributes: attrs}); })()"',
+        'result = js(js_code)',
+        'data = json.loads(result) if isinstance(result, str) else result',
+        'print(json.dumps(data, indent=2))'
+      ].join('\n');
+      break;
+    }
+    case 'browser_handle_dialog': {
+      if (!args.action) throw new Error('action is required (accept or dismiss)');
+      var actionJson = JSON.stringify(args.action);
+      var promptJson = JSON.stringify(args.prompt_text || '');
+      script = [
+        'import json',
+        'action = json.loads(' + JSON.stringify(actionJson) + ')',
+        'prompt_text = json.loads(' + JSON.stringify(promptJson) + ')',
+        'accept_str = "true" if action == "accept" else "false"',
+        'action_str = json.dumps(action)',
+        'js_code = "(() => { const accept = " + accept_str + "; const pt = " + json.dumps(prompt_text) + "; const act = " + action_str + "; window.alert = function() { return undefined; }; window.confirm = function() { return accept; }; window.prompt = function(msg, def) { return accept ? (pt || def || \\"\\") : null; }; return JSON.stringify({handled: true, action: act}); })()"',
+        'result = js(js_code)',
+        'print(result)'
+      ].join('\n');
+      break;
+    }
     default:
       throw new Error('Unknown tool: ' + name);
   }

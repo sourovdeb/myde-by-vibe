@@ -188,6 +188,9 @@ const TOOLS = [
   { name: 'firefox_type', description: 'Type text in Firefox', inputSchema: { type: 'object', properties: { text: { type: 'string' } }, required: ['text'] } },
   { name: 'firefox_get_dom', description: 'Get HTML content from Firefox', inputSchema: { type: 'object', properties: { selector: { type: 'string' } } } },
   { name: 'firefox_scroll', description: 'Scroll Firefox page', inputSchema: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' } } } },
+  { name: 'firefox_wait_for_element', description: 'Wait for a CSS selector to appear on the Firefox page within a given timeout', inputSchema: { type: 'object', properties: { selector: { type: 'string', description: 'CSS selector to wait for' }, timeout_ms: { type: 'number', description: 'Maximum time to wait in milliseconds (default 10000)' } }, required: ['selector'] } },
+  { name: 'firefox_get_element_text', description: 'Extract the text content, inner HTML, and attributes of a specified element in Firefox', inputSchema: { type: 'object', properties: { selector: { type: 'string', description: 'CSS selector for the target element' } }, required: ['selector'] } },
+  { name: 'firefox_handle_dialog', description: 'Handle JavaScript alert/confirm/prompt dialogs in Firefox by accepting or dismissing them', inputSchema: { type: 'object', properties: { action: { type: 'string', enum: ['accept', 'dismiss'], description: 'Whether to accept or dismiss the dialog' }, prompt_text: { type: 'string', description: 'Text to enter if the dialog is a prompt (only used with accept action)' } }, required: ['action'] } },
 ];
 
 async function executeTool(name, args) {
@@ -327,6 +330,55 @@ async function executeTool(name, args) {
       const dy = args.y || 500;
       await d.executeScript('window.scrollBy(arguments[0], arguments[1]);', dx, dy);
       return { output: 'Scrolled by dx=' + dx + ' dy=' + dy };
+    }
+    
+    case 'firefox_wait_for_element': {
+      if (!args.selector) throw new Error('selector is required');
+      const timeoutMs = args.timeout_ms || 10000;
+      const start = Date.now();
+      let found = false;
+      let elapsed = 0;
+      while (elapsed < timeoutMs) {
+        try {
+          await d.findElement(By.css(args.selector));
+          found = true;
+          break;
+        } catch (e) {
+          // Element not found yet
+        }
+        await sleep(200);
+        elapsed = Date.now() - start;
+      }
+      return { output: JSON.stringify({ found, selector: args.selector, elapsed_ms: elapsed }) };
+    }
+    
+    case 'firefox_get_element_text': {
+      if (!args.selector) throw new Error('selector is required');
+      try {
+        const el = await d.findElement(By.css(args.selector));
+        const text = await el.getText();
+        const html = await el.getAttribute('innerHTML');
+        // Get all attributes via JS
+        const attrs = await d.executeScript(
+          'const el = document.querySelector(arguments[0]); if (!el) return {}; const attrs = {}; for (let i = 0; i < el.attributes.length; i++) { attrs[el.attributes[i].name] = el.attributes[i].value; } return attrs;',
+          args.selector
+        );
+        return { output: JSON.stringify({ exists: true, text, html, attributes: attrs }, null, 2) };
+      } catch (e) {
+        return { output: JSON.stringify({ exists: false, text: '', html: '', attributes: {} }, null, 2) };
+      }
+    }
+    
+    case 'firefox_handle_dialog': {
+      if (!args.action) throw new Error('action is required (accept or dismiss)');
+      // Override dialog functions via JS to auto-handle future dialogs
+      const accept = args.action === 'accept';
+      const promptText = args.prompt_text || '';
+      await d.executeScript(
+        'const accept = arguments[0]; const pt = arguments[1]; window.alert = function() { return undefined; }; window.confirm = function() { return accept; }; window.prompt = function(msg, def) { return accept ? (pt || def || "") : null; }; return JSON.stringify({handled: true, action: accept ? "accept" : "dismiss"});',
+        accept, promptText
+      );
+      return { output: JSON.stringify({ handled: true, action: args.action }) };
     }
     
     default:

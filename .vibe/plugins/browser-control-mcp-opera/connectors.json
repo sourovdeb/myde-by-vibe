@@ -15,7 +15,10 @@
         "opera_click",
         "opera_type",
         "opera_get_dom",
-        "opera_scroll"
+        "opera_scroll",
+        "opera_wait_for_element",
+        "opera_get_element_text",
+        "opera_handle_dialog"
       ]
     }
   ]
