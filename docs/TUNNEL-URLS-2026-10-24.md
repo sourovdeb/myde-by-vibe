@@ -7,6 +7,17 @@
 | Browser Control MCP | 3001 | `https://fork-remind-persistent-delays.trycloudflare.com` | `https://fork-remind-persistent-delays.trycloudflare.com/mcp` |
 | System Info MCP (my-mcp-connector) | 3000 | `https://chocolate-loading-scanning-matthew.trycloudflare.com` | `https://chocolate-loading-scanning-matthew.trycloudflare.com/mcp` |
 
+## DEAD Tunnel URLs — DO NOT USE (return 503/timeout)
+
+These old tunnel URLs are expired and return 503 Service Unavailable or timeout. If you see these in the Mistral AI debugger, close the tab and use the current URLs above:
+
+| Dead URL | Was Used By | Status |
+|----------|------------|--------|
+| `https://artificial-hope-resulted-pad.trycloudflare.com/mcp` | Old System Info MCP connector (`system_info_mcp_4113`, deleted) | DEAD — timeout |
+| `https://cashiers-cheap-membership-chapel.trycloudflare.com/mcp` | Old Browser Control MCP connector (`browser_control_mcp_a498`, deleted) | DEAD — timeout |
+
+**Verified 2026-10-24 06:37 UTC:** Both dead URLs timeout (000). Both current URLs return 200 on MCP initialize.
+
 ## Mistral AI Connectors — ACTIVE (2026-10-24)
 
 Both connectors were created via the Mistral tRPC API (`integrations.create`) and connected via the UI "Connect" button. Old broken connectors were deleted via `integrations.deleteIntegrationForOrgOrWorkspace`.
