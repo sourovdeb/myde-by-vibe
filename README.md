@@ -14,11 +14,13 @@ workstream — sources of truth for what was done, when, and with what evidence.
 | `elt365-dedup-manifest.md` | Manifest of the ELT365 dedup: 507 duplicates + 36 junk drafts trashed, canonicals verified. |
 | `tools/wp_dedupe_elt365.py` | Idempotent ELT365 dedup script (dry-run by default, `--apply` to trash duplicates). Credentials come from `WP_URL` / `WP_USER` / `WP_APP_PASSWORD` env vars — never hardcoded. |
 | `tools/particle-field.html` | Standalone interactive particle-field tool (swirl, trails, controls, screenshot export). |
+| `tools/mcp-servers/` | Clean-room v2 rewrites of the two local MCP servers behind the Vibe MCP Bridge: `my-mcp-connector.js` (:3000, 5 tools) and `browser-control-mcp.js` (:3001, 15 tools). Single-file Node, zero deps, 50-test suite (mock CDP — see README for verified limits). |
 | `sessions/` | Dated session notes. |
 | `vibe/` | Snapshot of the Vibe configuration used for this work (config, plugins, skills). |
 | `vibe/plugins/vibe-mcp-bridge/vibe-mcp-bridge.php` | Fallback copy of the WordPress Vibe MCP Bridge plugin v1.1.0 (2026-10-25: admin form to add/edit MCP server entries + `vibe_mcp_servers_last_backup` rollback option). |
 | `MCP-CLOUD-CONNECTOR-RUNBOOK.md` | Durable reconnect procedure for the Mistral cloud → Cloudflare tunnel → local MCP chain (ports, verify steps, tRPC connector flow, red-alert register). |
 | `sessions/2026-10-25-guardian-audit.md` | Session notes: guardian threshold remediation, MCP chain recovery, bridge v1.1.0, efficiency audit, open red alerts. |
+| `sessions/2026-10-25-mcp-server-upgrade.md` | Session notes: MCP server audit, clean-room v2 rebuild, request-handler bug found and fixed by the test suite, 50/50 test results and honest limits. |
 | `H-drive/` | Mirror of the H-drive skill copy referenced by recovery work. |
 
 ## Conventions
