@@ -59,6 +59,11 @@ add_action('admin_menu', function() {
                     'tools' => isset($_POST['new_tools']) ? array_values(array_filter(array_map('trim', explode(',', sanitize_text_field(wp_unslash($_POST['new_tools'])))))) : array(),
                 );
             }
+            /* never allow an empty submission to wipe the list */
+            if (0 === count($clean)) {
+                echo '<div class="notice notice-error"><p>Saved failed: no server rows were submitted — nothing saved.</p></div>';
+                return;
+            }
             /* keep last-good value for one-step rollback */
             update_option('vibe_mcp_servers_last_backup', $servers);
             update_option('vibe_mcp_servers', $clean);
