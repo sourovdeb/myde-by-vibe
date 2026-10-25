@@ -28,6 +28,22 @@ Last verified state: 2026-10-25 ~13:10Z from this machine.
 5. **Verify end-to-end**: POST MCP `initialize` to `<tunnel>/mcp` (Accept: `application/json, text/event-stream`), then `tools/list` with the session header. Browser Control = 15 tools, System Info = 5.
 6. Update `~\.vibe\HANDOFF.md` with the new URLs + connector IDs (this repo's runbook stays the durable copy).
 
+## Verified later 2026-10-25 (~13:35Z, Vibe — 3-layer check)
+
+- End-to-end re-verified with real `tools/call` through **both public tunnel
+  URLs**: 3001 `browser_list_tabs` returned live Chrome tabs, 3000
+  `health_check` returned live JSON. Connector detail pages at
+  `chat.mistral.ai/connections/<name>` show full tool lists (15 / 5) and no
+  "cannot reach" error — Mistral's backend reaches both servers.
+- The bridge backup in host `/tmp` is **volatile** (host reboot wipes it).
+  Verified present 2026-10-25: `/tmp/vibe-mcp-bridge.php.bak-20261025`, 2055
+  bytes, md5 `78de5cae9765a3465917c77ebab6e660`. Copy to `~/backups/` before relying on it.
+- Fallback when H: is unmounted (happened 2026-10-25): the provider-router
+  helper is unreachable, but Agnes and TypeSafe can be called directly —
+  request shapes in `E:\scripts\lib\ai.ps1` (`Invoke-Agnes`,
+  `Invoke-TypeSafeCheck`).
+- Full session record: `sessions/2026-10-25-full-verification.md`.
+
 ## Known data drift (fix when convenient)
 
 - WP `vibe_mcp_servers` option (pre-v1.1.0 seed) lists 12 browser tools in camelCase (e.g. `healthcheck`); the live 3000 server registers snake_case names (`health_check`). The bridge's admin form now lets the stored list be edited — sync it to the live names.

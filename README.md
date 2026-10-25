@@ -21,6 +21,7 @@ workstream — sources of truth for what was done, when, and with what evidence.
 | `MCP-CLOUD-CONNECTOR-RUNBOOK.md` | Durable reconnect procedure for the Mistral cloud → Cloudflare tunnel → local MCP chain (ports, verify steps, tRPC connector flow, red-alert register). |
 | `sessions/2026-10-25-guardian-audit.md` | Session notes: guardian threshold remediation, MCP chain recovery, bridge v1.1.0, efficiency audit, open red alerts. |
 | `sessions/2026-10-25-mcp-server-upgrade.md` | Session notes: MCP server audit, clean-room v2 rebuild, request-handler bug found and fixed by the test suite, 50/50 test results and honest limits. |
+| `sessions/2026-10-25-full-verification.md` | Three-layer verification (Vibe direct → Agnes cross-reference → TypeSafe with negative control) of all plugins, extension, MCP servers, tunnels and connectors; session problems as reminders; open decisions. |
 | `H-drive/` | Mirror of the H-drive skill copy referenced by recovery work. |
 
 ## Conventions
