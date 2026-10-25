@@ -136,7 +136,16 @@ class SA_Settings {
 	}
 }
 
-/** REST gate: admin-only + per-page nonce issued to that same user. */
+/**
+ * REST gate: admin-only + per-page nonce issued to that same user.
+ *
+ * Requires BOTH headers on every request:
+ * - X-WP-Nonce: standard WP REST cookie-auth nonce; without it the request is
+ *   treated as a guest and rejected with 403 "Admins only.".
+ * - X-SA-Nonce: plugin nonce (wp_create_nonce( 'sa_rest' )); without it the
+ *   request is rejected with 403 "Nonce check failed.".
+ * See README.md "REST API authentication" for details.
+ */
 function sa_rest_permission() {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		return new WP_Error( 'forbidden', 'Admins only.', array( 'status' => 403 ) );
