@@ -16,6 +16,9 @@ workstream — sources of truth for what was done, when, and with what evidence.
 | `tools/particle-field.html` | Standalone interactive particle-field tool (swirl, trails, controls, screenshot export). |
 | `sessions/` | Dated session notes. |
 | `vibe/` | Snapshot of the Vibe configuration used for this work (config, plugins, skills). |
+| `vibe/plugins/vibe-mcp-bridge/vibe-mcp-bridge.php` | Fallback copy of the WordPress Vibe MCP Bridge plugin v1.1.0 (2026-10-25: admin form to add/edit MCP server entries + `vibe_mcp_servers_last_backup` rollback option). |
+| `MCP-CLOUD-CONNECTOR-RUNBOOK.md` | Durable reconnect procedure for the Mistral cloud → Cloudflare tunnel → local MCP chain (ports, verify steps, tRPC connector flow, red-alert register). |
+| `sessions/2026-10-25-guardian-audit.md` | Session notes: guardian threshold remediation, MCP chain recovery, bridge v1.1.0, efficiency audit, open red alerts. |
 | `H-drive/` | Mirror of the H-drive skill copy referenced by recovery work. |
 
 ## Conventions
