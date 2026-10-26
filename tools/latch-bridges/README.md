@@ -10,21 +10,24 @@ Control DaVinci Resolve and OBS Studio from Mistral AI via the Latch MCP server.
 ## Architecture
 
 ```
-Mistral AI (chat.mistral.ai)
-    │
-    ▼
-Latch MCP Connector (latch_mcp_local_pc_tools_00da)
-    │  HTTPS via Cloudflare Tunnel
-    ▼
-Cloudflare Tunnel (https://jason-salvador-known-stood.trycloudflare.com)
-    │
-    ▼
-Latch Server (port 3939, E:\tools\latch\latch.exe)
-    │  run_task (allow-listed commands)
-    ▼
-Bridge Scripts (E:\tools\latch-bridges\)
-    ├── resolve_cmd.py → ResolvePython.exe → resolve_bridge.py → DaVinci Resolve API
-    └── obs_cmd.py → venv python → obs_bridge.py → OBS WebSocket (port 4455)
+Mistral AI (chat.mistral.ai)          Pi Agent (E:\apps\pi\agent\bin\pi)
+    │                                        │
+    ▼                                        ▼
+Latch MCP Connector                  Pi MCP Config (~/.pi/agent/mcp.json)
+(latch_mcp_local_pc_tools_00da)      or project-level (.pi/agent/mcp.json)
+    │                                        │
+    └────────────┬───────────────────────────┘
+                 │  HTTPS via Cloudflare Tunnel
+                 ▼
+    Cloudflare Tunnel (https://jason-salvador-known-stood.trycloudflare.com)
+                 │
+                 ▼
+    Latch Server (port 3939, E:\tools\latch\latch.exe)
+                 │  run_task (allow-listed commands)
+                 ▼
+    Bridge Scripts (E:\tools\latch-bridges\)
+        ├── resolve_cmd.py → ResolvePython.exe → resolve_bridge.py → DaVinci Resolve API
+        └── obs_cmd.py → venv python → obs_bridge.py → OBS WebSocket (port 4455)
 ```
 
 ---
@@ -241,6 +244,102 @@ curl -X POST "http://127.0.0.1:3939/mcp/mistral" \
 
 ---
 
+---
+
+## Pi Agent Integration
+
+The Pi agent (`E:\apps\pi\agent\bin\pi`, v1.3.0) can also control Resolve and OBS through Latch.
+
+### Pi MCP Configuration
+
+**User-level** (`C:\Users\souro\.pi\agent\mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "latch": {
+      "type": "http",
+      "url": "https://jason-salvador-known-stood.trycloudflare.com/mcp/pi",
+      "description": "Latch MCP — file ops + Resolve/OBS bridge commands via run_task"
+    }
+  }
+}
+```
+
+**Project-level** (`E:\ONE-STOP-SHOP\.pi\agent\mcp.json`) — same server, already configured.
+
+> **Note:** Project-level `.pi/mcp.json` overrides user-level for the same server name. Both point to the same Latch instance.
+
+### Pi Skill
+
+A Pi skill is installed at `E:\apps\agent-skills\latch-resolve-obs-bridges\SKILL.md` with:
+- Full command reference for all 15 Resolve + OBS commands
+- Usage examples (check status, list scenes, switch scenes, etc.)
+- Troubleshooting guide
+
+### Verification
+
+```bash
+pi mcp list
+# Output: latch: connected, 4 tools (list_files, read_file, search_files, run_task)
+```
+
+---
+
+## Security Audit (2026-10-26)
+
+### CRITICAL — Latch MCP Endpoints Unauthenticated
+
+**Finding:** Latch 0.2.0 MCP endpoints (`/mcp`, `/mcp/mistral`, `/mcp/pi`) have **zero authentication**. In `http.rs`, the `handle_client` function only checks the token for `/panel` endpoints. MCP endpoints go directly to `dispatch()` in `bridge.rs:416` with no token check.
+
+**Evidence:** `curl` to the tunnel URL without any token returns all 4 tools and executes `run_task` successfully.
+
+**Impact:** Anyone who knows the Cloudflare tunnel URL can call all MCP tools — read files, search files, and execute all 15 allow-listed Resolve/OBS commands.
+
+**Mitigation (proposed, not applied):** Add a reverse proxy on a different port that checks `Authorization: Bearer <token>` or `?token=` query param before forwarding to Latch on port 3939. Then repoint the Cloudflare tunnel at the proxy.
+
+**Workaround (current):** The tunnel URL is ephemeral (regenerated on cloudflared restart) and not publicly listed. The allow-list limits execution to 15 specific commands. Risk is moderate but real.
+
+### MEDIUM — Permissive CORS
+
+**Finding:** Latch sets `Access-Control-Allow-Origin: *` (http.rs:262). Any website can make requests to the Latch server if it's reachable from the browser.
+
+### LOW — OBS WebSocket No Authentication
+
+**Finding:** OBS WebSocket uses `ws://` (not `wss://`) and `OBS_PASSWORD = None`. No auth, but localhost-only (port 4455 bound to 127.0.0.1).
+
+### LOW — Traceback in Error Output
+
+**Finding:** `traceback.format_exc()` in error output could leak file paths. Goes to trusted AI only (Mistral/Pi).
+
+### LOW — Token in Plaintext Config
+
+**Finding:** Latch token (64-char hex) stored in plaintext in `latch.json`. By design for local tool.
+
+### SAFE — No Secrets in Bridge Scripts
+
+- No API keys, tokens, or passwords in any bridge script
+- Example config uses `"YOUR-TOKEN-HERE"` placeholder
+- `subprocess.run` uses list args, no `shell=True` — no command injection
+- All Python files pass `py_compile` syntax check
+
+---
+
+## Code Audit (2026-10-26)
+
+| Metric | Value |
+|--------|-------|
+| Total lines (4 scripts) | 524 |
+| Bare `except:` blocks | 0 (fixed — was 5 in resolve_bridge.py) |
+| Hardcoded paths | 2 (Resolve install path, OBS port 4455) — acceptable for local tool |
+| TODO/FIXME comments | 0 |
+| Unused imports | 0 |
+| Wrapper scripts | 2 (13 lines each, minimal) |
+
+**Fix applied:** Changed 5 bare `except:` blocks to `except Exception:` in `resolve_bridge.py` (lines 161–182, in `cmd_get_timeline_info`). Bare `except:` catches `KeyboardInterrupt` and `SystemExit` which is incorrect.
+
+---
+
 ## Test Results (2026-10-26)
 
 | Test | Result |
@@ -250,4 +349,7 @@ curl -X POST "http://127.0.0.1:3939/mcp/mistral" \
 | Latch run_task (local HTTP) | PASS — both bridges execute via `run_task` |
 | Latch run_task (tunnel) | PASS — both bridges execute via Cloudflare tunnel |
 | Mistral AI end-to-end | PASS — Mistral called `run_task` for both Resolve and OBS status, reported results correctly |
-| RAM usage | 4.52 GB free / 15.68 GB total (71.2% used) — healthy |
+| Pi agent MCP connection | PASS — `pi mcp list` shows `latch: connected, 4 tools` |
+| Pi agent run_task | PASS — Pi can execute Resolve/OBS commands via Latch |
+| Python syntax check | PASS — all 4 scripts pass `py_compile` |
+| RAM usage | 3.87 GB free / 15.68 GB total (75.3% used) — healthy |

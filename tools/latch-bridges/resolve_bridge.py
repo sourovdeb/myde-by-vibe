@@ -158,19 +158,19 @@ def cmd_get_timeline_info():
     # Try to get additional properties
     try:
         info["start_frame"] = timeline.GetStartFrame()
-    except:
+    except Exception:
         pass
     try:
         info["end_frame"] = timeline.GetEndFrame()
-    except:
+    except Exception:
         pass
     try:
         info["start_timecode"] = timeline.GetStartTimecode()
-    except:
+    except Exception:
         pass
     try:
         info["timeline_format"] = timeline.GetTimelineFormat()
-    except:
+    except Exception:
         pass
     
     # Get track count
@@ -179,7 +179,7 @@ def cmd_get_timeline_info():
         audio_tracks = timeline.GetAudioTrackCount()
         info["video_tracks"] = video_tracks
         info["audio_tracks"] = audio_tracks
-    except:
+    except Exception:
         pass
     
     output(info)
