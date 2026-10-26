@@ -17,8 +17,18 @@
     console.log('Content script received message:', request);
     
     if (request.type === 'execute_js') {
+      // Defense-in-depth: only accept execute_js from the extension's own background script.
+      // Messages from web pages (via window.DoubleControl.sendMessage) arrive at the
+      // background, not here — but validate anyway in case of forwarding bugs.
+      if (sender.id !== chrome.runtime.id) {
+        sendResponse({ success: false, error: 'Unauthorized sender: ' + (sender.id || 'unknown') });
+        return true;
+      }
       try {
-        const result = window.eval(request.code);
+        // Use Function constructor instead of window.eval — same page-context execution
+        // but avoids the eval-specific CSP restrictions and is slightly more contained.
+        const fn = new Function('return (' + request.code + ')');
+        const result = fn();
         sendResponse({ success: true, result: result });
       } catch (error) {
         sendResponse({ success: false, error: error.message });
