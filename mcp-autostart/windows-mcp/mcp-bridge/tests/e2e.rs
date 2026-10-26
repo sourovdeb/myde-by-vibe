@@ -204,14 +204,12 @@ fn e2e_oauth_full_flow() {
     assert_eq!(st, 200);
     assert!(body.contains("passphrase"), "{body}");
 
-    // 5. wrong passphrase -> 403
-    let q2 = format!("{q}&passphrase=wrong");
-    let (st, _) = http(port, "GET", &q2, None, &[]);
+    // 5. wrong passphrase -> 403 (POST: passphrase never in the URL)
+    let (st, _) = http(port, "POST", &q, Some("passphrase=wrong"), &[]);
     assert_eq!(st, 403);
 
     // 6. correct passphrase -> 302 with code
-    let q3 = format!("{q}&passphrase=hunter2");
-    let resp = raw_http(port, "GET", &q3, None, &[]);
+    let resp = raw_http(port, "POST", &q, Some("passphrase=hunter2"), &[]);
     assert!(resp.starts_with("HTTP/1.1 302"), "{}", &resp[..60.min(resp.len())]);
     let code = resp
         .split("code=")

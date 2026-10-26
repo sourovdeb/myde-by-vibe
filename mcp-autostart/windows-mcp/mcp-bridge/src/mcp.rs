@@ -148,7 +148,7 @@ mod tests {
         let r = b.handle(&body, Some("tools/list"));
         assert_eq!(r["id"], "a1");
         let tools = r["result"]["tools"].as_array().unwrap();
-        assert_eq!(tools.len(), 5);
+        assert_eq!(tools.len(), 7);
         assert_eq!(r["result"]["_meta"]["ttlMs"], 60000);
     }
 

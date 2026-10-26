@@ -66,6 +66,19 @@ impl Agent {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Workflow {
+    pub name: String,
+    /// agent that runs it (claude/grok/vibe/pi or any configured agent)
+    pub agent: String,
+    /// prompt template; {input} is replaced by the caller's input
+    pub prompt: String,
+    #[serde(default)]
+    pub workdir: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub enabled: bool,
     pub port: u16,
@@ -83,6 +96,9 @@ pub struct Config {
     pub tunnel_cmd: String,
     #[serde(default)]
     pub tunnel_args: Vec<String>,
+    /// named one-click workflows (podcast, wordpress, writing, ...)
+    #[serde(default)]
+    pub workflows: Vec<Workflow>,
 }
 
 fn default_passphrase() -> String {
@@ -130,6 +146,7 @@ impl Default for Config {
             passphrase: default_passphrase(),
             tunnel_cmd: String::new(),
             tunnel_args: vec![],
+            workflows: default_workflows(),
         }
     }
 }
@@ -175,4 +192,50 @@ pub fn workdir_allowed(cfg: &Config, workdir: &str) -> bool {
         let a = std::fs::canonicalize(allowed).unwrap_or_else(|_| PathBuf::from(allowed));
         wd.starts_with(&a)
     })
+}
+
+pub fn default_workflows() -> Vec<Workflow> {
+    vec![
+        Workflow {
+            name: "podcast-producer".into(),
+            agent: "vibe".into(),
+            prompt: "Run the podcast production pipeline end to end: {input}. Execute each stage, report outputs per stage.".into(),
+            workdir: "E:/ONE-STOP-SHOP/mistral-workflows".into(),
+            enabled: true,
+        },
+        Workflow {
+            name: "wordpress-maintainer".into(),
+            agent: "claude".into(),
+            prompt: "Run the wordpress-maintainer workflow: {input}. Perform maintenance checks and fixes, report each step.".into(),
+            workdir: "E:/ONE-STOP-SHOP/mistral-workflows".into(),
+            enabled: true,
+        },
+        Workflow {
+            name: "academic-paper-pipeline".into(),
+            agent: "claude".into(),
+            prompt: "Run the academic paper pipeline: {input}. Draft, cite, and report progress per stage.".into(),
+            workdir: "E:/ONE-STOP-SHOP/mistral-workflows".into(),
+            enabled: true,
+        },
+        Workflow {
+            name: "content-scheduler".into(),
+            agent: "vibe".into(),
+            prompt: "Run the content scheduler workflow: {input}. Produce the multi-platform schedule and drafts.".into(),
+            workdir: "E:/ONE-STOP-SHOP/mistral-workflows".into(),
+            enabled: true,
+        },
+        Workflow {
+            name: "mishu-critical-thinking-decision-audit".into(),
+            agent: "pi".into(),
+            prompt: "Run the mishu critical-thinking decision audit on: {input}. Produce the structured audit report.".into(),
+            workdir: "E:/ONE-STOP-SHOP/mistral-workflows".into(),
+            enabled: true,
+        },
+    ]
+}
+
+impl Workflow {
+    pub fn render_prompt(&self, input: &str) -> String {
+        self.prompt.replace("{input}", input)
+    }
 }

@@ -61,6 +61,20 @@ impl Bridge {
                 "inputSchema": {"type":"object","properties":{"job_id":{"type":"string"}},"required":["job_id"]}
             }),
             json!({
+                "name": "bridge_list_workflows",
+                "description": "List named one-click workflows (podcast, wordpress, writing, ...) and their agents.",
+                "inputSchema": {"type":"object","properties":{},"required":[]}
+            }),
+            json!({
+                "name": "bridge_run_workflow",
+                "description": "Run a named workflow one-click: renders its prompt template with {input} and runs its agent headless. background=true returns a job id.",
+                "inputSchema": {"type":"object","properties":{
+                    "workflow":{"type":"string"},
+                    "input":{"type":"string"},
+                    "background":{"type":"boolean"}
+                },"required":["workflow"]}
+            }),
+            json!({
                 "name": "bridge_job_cancel",
                 "description": "Cancel a background job.",
                 "inputSchema": {"type":"object","properties":{"job_id":{"type":"string"}},"required":["job_id"]}
@@ -74,6 +88,8 @@ impl Bridge {
             "bridge_run_agent" => self.run_agent(args, false),
             "bridge_start_agent" => self.run_agent(args, true),
             "bridge_job_poll" => self.jobs.poll(args).map_err(|e| e),
+            "bridge_list_workflows" => Ok(self.list_workflows()),
+            "bridge_run_workflow" => self.run_workflow(args),
             "bridge_job_cancel" => self.jobs.cancel(args).map_err(|e| e),
             _ => Err(format!("unknown tool: {tool}")),
         }
@@ -132,7 +148,7 @@ impl Bridge {
         let argv = agent.argv(workdir);
 
         if self.mock_mode && !background {
-            let out = format!("MOCK {name} ok; argv={argv:?}; prompt_len={}", prompt.len());
+            let out = format!("MOCK {name} ok; argv={argv:?}; prompt={prompt:?}");
             let out = truncate(&out);
             return Ok(json!({"stdout": out, "exit_code": 0}));
         }
@@ -284,6 +300,8 @@ mod tests {
                 "bridge_run_agent",
                 "bridge_start_agent",
                 "bridge_job_poll",
+                "bridge_list_workflows",
+                "bridge_run_workflow",
                 "bridge_job_cancel"
             ]
         );
@@ -310,5 +328,56 @@ impl Bridge {
         } else {
             self.tunnel.stop();
         }
+    }
+}
+
+impl Bridge {
+    fn list_workflows(&self) -> Value {
+        let cfg = self.cfg.read().unwrap();
+        let wfs: Vec<Value> = cfg
+            .workflows
+            .iter()
+            .map(|w| {
+                json!({
+                    "name": w.name,
+                    "agent": w.agent,
+                    "workdir": w.workdir,
+                    "enabled": w.enabled,
+                })
+            })
+            .collect();
+        json!({ "workflows": wfs })
+    }
+
+    fn run_workflow(&self, args: &Value) -> Result<Value, String> {
+        let name = args
+            .get("workflow")
+            .and_then(|v| v.as_str())
+            .ok_or("missing workflow")?;
+        let input = args.get("input").and_then(|v| v.as_str()).unwrap_or("");
+        let background = args.get("background").and_then(|v| v.as_bool()).unwrap_or(false);
+
+        let cfg = self.cfg.read().unwrap();
+        if !cfg.enabled {
+            return Err("bridge is disabled (tray toggle off)".into());
+        }
+        let wf = cfg
+            .workflows
+            .iter()
+            .find(|w| w.name == name)
+            .filter(|w| w.enabled)
+            .ok_or_else(|| format!("workflow not found or disabled: {name}"))?
+            .clone();
+        drop(cfg);
+
+        let prompt = wf.render_prompt(input);
+        let mut call = json!({"agent": wf.agent, "prompt": prompt});
+        if !wf.workdir.is_empty() {
+            call["workdir"] = json!(wf.workdir);
+        }
+        if background {
+            call["background"] = json!(true);
+        }
+        self.run_agent(&call, background)
     }
 }

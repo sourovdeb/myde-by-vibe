@@ -134,7 +134,13 @@ fn handle_mcp(
         );
     }
     if path == "/authorize" {
-        let q = parse_query(&path_and_query);
+        // POST keeps the passphrase out of URLs, browser history and logs
+        let mut q = parse_query(&path_and_query);
+        if method == "POST" {
+            for (k, v) in parse_form(&body) {
+                q.insert(k, v);
+            }
+        }
         let client_id = q.get("client_id").cloned().unwrap_or_default();
         let redirect_uri = q.get("redirect_uri").cloned().unwrap_or_default();
         let challenge = q.get("code_challenge").cloned().unwrap_or_default();
@@ -331,7 +337,7 @@ fn authorize_page(client_id: &str, redirect_uri: &str, challenge: &str, state: &
 input{{width:100%;padding:.5rem;margin-top:.5rem}}button{{margin-top:1rem;padding:.5rem 1.5rem}}</style></head>
 <body><h2>mcp-bridge</h2><p>A cloud chat is asking to run your local coding agents.
 Enter the bridge passphrase to approve.</p>
-<form method="GET" action="/authorize">
+<form method="POST" action="/authorize">
 <input type="hidden" name="client_id" value="{}">
 <input type="hidden" name="redirect_uri" value="{}">
 <input type="hidden" name="code_challenge" value="{}">

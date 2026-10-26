@@ -47,9 +47,19 @@ claude.ai / grok.com / Le Chat      (cloud, HTTPS+OAuth)
 
 - **Both MCP eras**: old `initialize` handshake *and* 2026-07-28 stateless
   requests (`Mcp-Method` header, version in `_meta`, `ttlMs`/`cacheScope`).
-- **Tools**: `bridge_list_agents`, `bridge_run_agent` (sync, 120 s timeout,
-  100 KB cap), `bridge_start_agent`/`bridge_job_poll`/`bridge_job_cancel`
-  (max 4 concurrent, incremental output).
+- **Tools (7)**: `bridge_list_agents`, `bridge_run_agent` (sync, 120 s
+  timeout, 100 KB cap), `bridge_start_agent`/`bridge_job_poll`/
+  `bridge_job_cancel` (max 4 concurrent, incremental output),
+  `bridge_list_workflows`, `bridge_run_workflow`.
+- **One-click workflows**: named workflows in config map to your local
+  agent + prompt template + workdir. Defaults pre-wired for the five
+  mistral-workflows (podcast-producer, wordpress-maintainer,
+  academic-paper-pipeline, content-scheduler,
+  mishu-critical-thinking-decision-audit) pointing at
+  `E:/ONE-STOP-SHOP/mistral-workflows`. Any connected chat (or local
+  agent) runs one with a single `bridge_run_workflow` call; `background`
+  returns a job id for long pipelines. Edit names/agents/prompts in the
+  settings API or config.json — no recompile.
 - **OAuth 2.1 (step 8)**: full single-user AS — RFC 9728/8414 metadata routes,
   dynamic client registration, `/authorize` passphrase consent page, PKCE
   S256 (hand-rolled SHA-256, FIPS 180-4 vectors + Python cross-check),
@@ -92,16 +102,21 @@ controls it:
 "tunnel_args": ["funnel", "--bg", "--https=443", "--set-path=/mcp", "http://127.0.0.1:{port}/mcp"]
 ```
 
-## Tests (76 total, all passing)
+## Tests (77 + 30 scenarios, all passing)
 
 - `cargo test --lib` ×2: 37 tests — protocol eras, allowlist, argv
   construction, OAuth (FIPS SHA-256 vectors, PKCE S256, flow, replay,
   redirect validation), auth wiring, tunnel (placeholders, start/stop,
   idempotence), timeout/cap, no-shell-injection.
+- `cargo test --test mock30`: one suite, 30 numbered scenarios over real
+  TCP — the full usable path: workflow listing/one-click/rendering, all 4
+  agents, allowlist, kill switch, jobs, admin toggle-off-then-on, both
+  protocol eras, error handling. `30/30 passed`.
 - `cargo test --test e2e`: 2 flows over real TCP — the original full flow
   and the OAuth end-to-end (metadata → DCR → 401 → consent page → wrong
   passphrase 403 → 302 code → PKCE exchange → code replay rejected →
-  authenticated tools/list → bogus token 401).
+  authenticated tools/list → bogus token 401; consent passphrase now
+  POSTed, never in URLs/history/logs).
 
 ## Status / verification honesty
 
