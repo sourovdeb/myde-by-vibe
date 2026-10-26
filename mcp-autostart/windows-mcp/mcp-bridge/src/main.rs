@@ -1,3 +1,5 @@
+#![cfg_attr(all(windows, feature = "tray"), windows_subsystem = "windows")]
+
 mod auth;
 mod bridge;
 mod config;
@@ -5,7 +7,11 @@ mod http;
 mod http_admin;
 mod jobs;
 mod mcp;
+mod oauth;
 mod runner;
+#[cfg(all(windows, feature = "tray"))]
+mod tray;
+mod tunnel;
 
 use std::net::TcpListener;
 use std::sync::Arc;
@@ -18,12 +24,14 @@ fn main() {
     let check = args.iter().any(|a| a == "--check");
 
     if check {
-        // prints what claude.ai / grok.com need: the connector URL form
         let cfg = config::load_config();
         println!("mcp-bridge v{}", env!("CARGO_PKG_VERSION"));
         println!("local:   http://127.0.0.1:{}/mcp", cfg.port);
         if !cfg.public_url.is_empty() {
             println!("public:  {}", cfg.public_url);
+        }
+        if !cfg.tunnel_cmd.is_empty() {
+            println!("tunnel:  {} {:?}", cfg.tunnel_cmd, cfg.tunnel_args);
         }
         println!("admin:   http://127.0.0.1:{}/", cfg.admin_port);
         return;
@@ -50,5 +58,27 @@ fn main() {
         if enabled { "enabled" } else { "disabled" },
         port
     );
-    http::serve(mcp_listener, b, false);
+
+    // start tunnel if configured and enabled
+    if enabled {
+        let cfg = b.cfg.read().unwrap().clone();
+        if !cfg.tunnel_cmd.is_empty() {
+            if let Err(e) = b.tunnel.start(&cfg) {
+                eprintln!("tunnel start failed: {e}");
+            }
+        }
+    }
+
+    #[cfg(all(windows, feature = "tray"))]
+    {
+        let cfg = b.cfg.read().unwrap().clone();
+        let b2 = b.clone();
+        let server_b = b.clone();
+        std::thread::spawn(move || http::serve(mcp_listener, server_b, false));
+        tray::run_tray(b2, cfg); // main thread owns the Win32 event loop
+    }
+    #[cfg(not(all(windows, feature = "tray")))]
+    {
+        http::serve(mcp_listener, b, false);
+    }
 }

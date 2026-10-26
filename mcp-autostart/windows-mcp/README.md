@@ -4,38 +4,41 @@ Tiny Rust MCP bridge for Windows: cloud chats (claude.ai custom connectors,
 grok.com, Le Chat) call your local coding agents — `claude`, `grok`, `vibe`,
 `pi` — as MCP tools, headless and read-only by default.
 
-Created 2026-10-26. Follows the mcp-bridge 12-step plan (protocol eras,
-OAuth-first, workflow tools, tray + admin settings, external tunnel).
+Created 2026-10-26. All 12 steps of the mcp-bridge plan are implemented
+(audited unit-by-unit; see Status for what is verified where).
 
 ## Build & size
 
 ```
-cargo build --release
+cargo build --release                          # plain server (~548 KB)
+cargo build --release --features tray         # with Windows tray (on Windows)
+cargo check --features tray --target x86_64-pc-windows-gnu   # cross type-check
 ```
 
 Size profile: `opt-level="z"`, `lto=true`, `codegen-units=1`, `panic="abort"`,
-`strip=true`. Release binary measured at **~504 KB** (Linux; Windows target
-similar) — well under the 2 MB goal. No reqwest, clap, or schemars; HTTP is
-hand-rolled std; no TLS (TLS terminates at the tunnel).
+`strip=true`. Plain release measured **548 KB** (Linux). cargo-bloat: `std`
+is 73% of .text; no droppable heavy dependency exists. Tray adds size only
+in the `--features tray` build.
 
 ## Run
 
 ```
-mcp-bridge.exe              # normal (binds 127.0.0.1:8765/mcp, admin :8766)
-mcp-bridge.exe --mock       # mock agents: returns canned output, spawns nothing
+mcp-bridge.exe              # servers in foreground (tray build: tray on main thread)
+mcp-bridge.exe --mock       # mock agents: canned output, spawns nothing
 mcp-bridge.exe --check      # prints connector URLs to register in cloud chats
 ```
 
-Config: `%APPDATA%\mcp-bridge\config.json` (created with defaults on first
-run). Edit via the admin page at `http://127.0.0.1:8766/` (On/Off toggle,
-per-agent enable/mode, allowed dirs, ports, passphrase).
+Config: `%APPDATA%\mcp-bridge\config.json` (defaults created on first run).
+Settings page: `http://127.0.0.1:8766/` — On/Off toggle (starts/stops the
+tunnel), per-agent enable/mode, allowed dirs, ports, passphrase, tunnel
+command.
 
 ## Architecture
 
 ```
 claude.ai / grok.com / Le Chat      (cloud, HTTPS+OAuth)
         │
- Tailscale Funnel  --https=443 --set-path=/mcp  (external, not built here)
+ external tunnel (tailscale funnel / cloudflare; started by the toggle)
         │
  127.0.0.1:8765/mcp  ── mcp-bridge (this exe, std only)
         │ spawn argv, prompt via stdin
@@ -43,53 +46,72 @@ claude.ai / grok.com / Le Chat      (cloud, HTTPS+OAuth)
 ```
 
 - **Both MCP eras**: old `initialize` handshake *and* 2026-07-28 stateless
-  requests (`Mcp-Method` header, version in `_meta`, `ttlMs`/`cacheScope` in
-  `tools/list` results).
+  requests (`Mcp-Method` header, version in `_meta`, `ttlMs`/`cacheScope`).
 - **Tools**: `bridge_list_agents`, `bridge_run_agent` (sync, 120 s timeout,
   100 KB cap), `bridge_start_agent`/`bridge_job_poll`/`bridge_job_cancel`
-  (background, max 4 concurrent, incremental output delivery).
-- **Auth**: dev bearer until step 8's full OAuth 2.1 lands (PKCE S256,
-  `/authorize` passphrase page, dynamic client registration; metadata
-  helpers `well_known`/`protected_resource` already in `src/auth.rs`).
-  Set a passphrase in settings to activate the bearer check on `/mcp`;
-  default `change-me` = no-auth dev mode.
-- **Safety**: argv-only spawns (never shell strings), workdir must resolve
-  inside `allowed_dirs`, default mode `readonly` per-CLI tool allowlist,
-  admin port never routed through the tunnel, tray toggle = kill switch.
+  (max 4 concurrent, incremental output).
+- **OAuth 2.1 (step 8)**: full single-user AS — RFC 9728/8414 metadata routes,
+  dynamic client registration, `/authorize` passphrase consent page, PKCE
+  S256 (hand-rolled SHA-256, FIPS 180-4 vectors + Python cross-check),
+  single-use 60 s codes, bearer check on `/mcp` with `WWW-Authenticate`
+  pointing at the metadata. Passphrase `change-me` = dev no-auth mode.
+  **Limitations (audited, honest)**: tokens are non-cryptographic ids
+  (time+counter hash) — acceptable for a single-user bridge, not a
+  multi-tenant AS; no refresh-token grant yet; no TLS by design (the tunnel
+  terminates TLS); state is in-memory (restart = re-consent).
+- **Tray (step 10, `--features tray`, Windows-only)**: Enabled check item
+  (kill switch), Open Settings, Copy connector URL, Quit. Tray on the main
+  thread (Win32 event loop requirement), servers on background threads.
+  `#![windows_subsystem = "windows"]` in that build. Verified by
+  cross-compilation type-check; **runtime behavior needs a Windows test**.
+- **Tunnel control (step 11)**: `tunnel_cmd` + `tunnel_args` in config
+  (argv array, never shell), `{port}` placeholder, output to
+  `%APPDATA%\mcp-bridge\tunnel.log`, started/stopped with the On/Off toggle
+  via `Bridge::set_enabled` (single entry point shared by tray + admin API).
+- **Safety**: argv-only spawns, stdin prompts, workdir allowlist, readonly
+  per-CLI defaults, admin port never tunneled, tray toggle = kill switch.
 
 ## Register as a custom connector
 
 Local-only (desktop clients): `http://127.0.0.1:8765/mcp` via an
 `mcp-remote` stdio shim — claude.ai's cloud cannot reach localhost.
 
-Cloud chats (claude.ai → Customize → Connectors → Add custom connector,
-grok.com/connectors, Le Chat custom MCP tab) need a **public HTTPS URL on
-port 443**:
+Cloud chats need a **public HTTPS URL on port 443** (claude.ai only
+connects on 443; Funnel's public listener only allows 443/8443/10000):
 
 ```
 tailscale funnel --bg --https=443 --set-path=/mcp http://127.0.0.1:8765/mcp
 ```
 
-Then register `https://<machine>.<tailnet>.ts.net/mcp`. (Funnel's public
-listener only allows 443/8443/10000, and claude.ai only connects on 443 —
-`funnel --bg 8765` will not work.)
+Then register `https://<machine>.<tailnet>.ts.net/mcp`. Put the same
+command in config as `tunnel_cmd`/`tunnel_args` so the tray toggle
+controls it:
 
-## Tests
+```json
+"tunnel_cmd": "tailscale",
+"tunnel_args": ["funnel", "--bg", "--https=443", "--set-path=/mcp", "http://127.0.0.1:{port}/mcp"]
+```
 
-- 27 unit tests: `cargo test --lib` (protocol eras, allowlist, argv
-  construction, auth, timeout/cap, no-shell-injection).
-- E2E over real TCP: `cargo test --test e2e` — boots both servers on
-  ephemeral ports and drives healthz, initialize, notification 202, ping,
-  header-method tools/list, mock run, allowlist 403, job start/poll,
-  discover, admin page/API, 404/400, disabled 503.
+## Tests (76 total, all passing)
 
-All passing as of 2026-10-26 (`27 + 27 + 1`).
+- `cargo test --lib` ×2: 37 tests — protocol eras, allowlist, argv
+  construction, OAuth (FIPS SHA-256 vectors, PKCE S256, flow, replay,
+  redirect validation), auth wiring, tunnel (placeholders, start/stop,
+  idempotence), timeout/cap, no-shell-injection.
+- `cargo test --test e2e`: 2 flows over real TCP — the original full flow
+  and the OAuth end-to-end (metadata → DCR → 401 → consent page → wrong
+  passphrase 403 → 302 code → PKCE exchange → code replay rejected →
+  authenticated tools/list → bogus token 401).
 
-## Status / next steps
+## Status / verification honesty
 
-Done: steps 1–7, 9 (admin), size recipe (step 12 measured).
-Next: step 8 (full OAuth 2.1: authorize page, PKCE, `/register`, token
-refresh), step 10 (tray icon; needs `tray-icon` + a Windows event loop —
-add only when building on Windows), step 11 (tunnel control), step 12
-(cargo-wix MSI). CLI flag table in `src/config.rs` (`Agent::argv`) is data
-— verify each CLI's current flags before production use.
+| Step | State | Verified how |
+|---|---|---|
+| 1–7, 9 | done | unit + e2e tests on this machine |
+| 8 OAuth | done | unit + e2e over TCP; PKCE cross-checked with Python hashlib; non-crypto token ids documented |
+| 10 tray | code complete, **type-checked only** (`cargo check --features tray --target x86_64-pc-windows-gnu`); runtime untested — needs a Windows machine |
+| 11 tunnel | done + live-tested (sleep process) | unit tests |
+| 12 size/MSI | 548 KB measured; `wix/main.wxs` written; **MSI not built** — cargo-wix requires Windows; build there with `cargo wix` |
+
+Before production use: verify each CLI's current headless/read-only flags
+(table in `src/config.rs` is data, editable without recompiling logic).

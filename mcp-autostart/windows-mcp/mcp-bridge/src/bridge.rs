@@ -3,10 +3,14 @@ use std::sync::Arc;
 
 use crate::config::{workdir_allowed, Agent, Config};
 use crate::jobs::JobRegistry;
+use crate::oauth::OAuth;
+use crate::tunnel::TunnelCtl;
 
 pub struct Bridge {
     pub cfg: Arc<std::sync::RwLock<Config>>,
     pub jobs: JobRegistry,
+    pub oauth: OAuth,
+    pub tunnel: TunnelCtl,
     pub mock_mode: bool,
 }
 
@@ -18,6 +22,8 @@ impl Bridge {
         Self {
             cfg: Arc::new(std::sync::RwLock::new(cfg)),
             jobs: JobRegistry::new(),
+            oauth: OAuth::new(),
+            tunnel: TunnelCtl::new(),
             mock_mode,
         }
     }
@@ -281,5 +287,28 @@ mod tests {
                 "bridge_job_cancel"
             ]
         );
+    }
+}
+
+impl Bridge {
+    /// Set enabled + persist + start/stop the tunnel. Single entry point so
+    /// tray, admin API and config writes stay consistent.
+    pub fn set_enabled(&self, on: bool) {
+        {
+            let mut cfg = self.cfg.write().unwrap();
+            cfg.enabled = on;
+            let snapshot = cfg.clone();
+            let _ = crate::config::save_config(&snapshot);
+        }
+        let cfg = self.cfg.read().unwrap().clone();
+        if on {
+            if !cfg.tunnel_cmd.is_empty() {
+                if let Err(e) = self.tunnel.start(&cfg) {
+                    eprintln!("tunnel start failed: {e}");
+                }
+            }
+        } else {
+            self.tunnel.stop();
+        }
     }
 }

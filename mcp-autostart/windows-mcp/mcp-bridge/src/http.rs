@@ -17,14 +17,15 @@ pub fn serve(listener: TcpListener, bridge: std::sync::Arc<Bridge>, is_admin: bo
 fn handle_conn(stream: TcpStream, bridge: &Bridge, is_admin: bool) -> std::io::Result<()> {
     // one BufReader for the whole request: headers and body share its buffer
     let mut reader = BufReader::new(stream);
-    let (method, path, headers) = read_request(&mut reader)?;
+    let (method, path_and_query, headers) = read_request(&mut reader)?;
     let body = read_body(&mut reader, &headers);
     let mut stream = reader.into_inner();
+    let path = path_and_query.split('?').next().unwrap_or("/").to_string();
 
     if is_admin {
         crate::http_admin::handle_admin(&mut stream, bridge, method, path, body)
     } else {
-        handle_mcp(&mut stream, bridge, method, path, headers, body)
+        handle_mcp(&mut stream, bridge, method, path, path_and_query, headers, body)
     }
 }
 
@@ -93,6 +94,7 @@ fn handle_mcp(
     bridge: &Bridge,
     method: String,
     path: String,
+    path_and_query: String,
     headers: Headers,
     body: String,
 ) -> std::io::Result<()> {
@@ -102,6 +104,76 @@ fn handle_mcp(
             respond_json(stream, 200, &json!({"status":"ok"}).to_string())
         } else {
             respond_json(stream, 503, &json!({"status":"disabled"}).to_string())
+        };
+    }
+
+    // ---- OAuth 2.1 routes (base = this server; all on the tunneled origin) ----
+    if path == "/.well-known/oauth-protected-resource" {
+        let meta = bridge.oauth.protected_resource_metadata("https://claude-connector.local");
+        return respond_json(stream, 200, &meta.to_string());
+    }
+    if path == "/.well-known/oauth-authorization-server" {
+        let meta = bridge.oauth.as_metadata("https://claude-connector.local");
+        return respond_json(stream, 200, &meta.to_string());
+    }
+    if path == "/register" && method == "POST" {
+        let parsed: Value = serde_json::from_str(&body).unwrap_or(json!({}));
+        let uris: Vec<String> = parsed
+            .get("redirect_uris")
+            .and_then(|v| v.as_array())
+            .map(|a| a.iter().filter_map(|u| u.as_str().map(String::from)).collect())
+            .unwrap_or_default();
+        if uris.is_empty() {
+            return respond_json(stream, 400, &json!({"error":"redirect_uris required"}).to_string());
+        }
+        let cid = bridge.oauth.register_client(uris.clone());
+        return respond_json(
+            stream,
+            201,
+            &json!({"client_id": cid, "redirect_uris": uris, "token_endpoint_auth_method": "none"}).to_string(),
+        );
+    }
+    if path == "/authorize" {
+        let q = parse_query(&path_and_query);
+        let client_id = q.get("client_id").cloned().unwrap_or_default();
+        let redirect_uri = q.get("redirect_uri").cloned().unwrap_or_default();
+        let challenge = q.get("code_challenge").cloned().unwrap_or_default();
+        let state = q.get("state").cloned().unwrap_or_default();
+        let passphrase = q.get("passphrase").cloned().unwrap_or_default();
+        if passphrase.is_empty() {
+            let page = authorize_page(&client_id, &redirect_uri, &challenge, &state);
+            return respond(stream, 200, "OK", &page, "text/html");
+        }
+        let expected = bridge.cfg.read().unwrap().passphrase.clone();
+        if passphrase != expected {
+            return respond(stream, 403, "Forbidden", "<h1>wrong passphrase</h1>", "text/html");
+        }
+        match bridge.oauth.issue_code(&client_id, &redirect_uri, &challenge) {
+            Ok(code) => {
+                let sep = if redirect_uri.contains('?') { '&' } else { '?' };
+                let loc = format!("{redirect_uri}{sep}code={code}&state={}", urlencode(&state));
+                let resp = format!("HTTP/1.1 302 Found\r\nLocation: {loc}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+                stream.write_all(resp.as_bytes())?;
+                return stream.shutdown(Shutdown::Write);
+            }
+            Err(e) => {
+                return respond_json(stream, 400, &json!({"error": e}).to_string());
+            }
+        }
+    }
+    if path == "/token" && method == "POST" {
+        let form = parse_form(&body);
+        let code = form.get("code").cloned().unwrap_or_default();
+        let client_id = form.get("client_id").cloned().unwrap_or_default();
+        let redirect_uri = form.get("redirect_uri").cloned().unwrap_or_default();
+        let verifier = form.get("code_verifier").cloned().unwrap_or_default();
+        return match bridge.oauth.exchange_code(&code, &client_id, &redirect_uri, &verifier) {
+            Ok(tok) => respond_json(
+                stream,
+                200,
+                &json!({"access_token": tok, "token_type": "Bearer", "expires_in": 86400}).to_string(),
+            ),
+            Err(e) => respond_json(stream, 400, &json!({"error": e}).to_string()),
         };
     }
 
@@ -186,3 +258,89 @@ await fetch('/api/config',{method:'PUT',headers:{'Content-Type':'application/jso
 document.getElementById('saved').textContent='saved';load();}
 load();
 </script></body></html>"#;
+
+fn parse_query(path_and_query: &str) -> std::collections::HashMap<String, String> {
+    let mut map = std::collections::HashMap::new();
+    if let Some(q) = path_and_query.split_once('?') {
+        for pair in q.1.split('&') {
+            if let Some((k, v)) = pair.split_once('=') {
+                map.insert(urldecode(k), urldecode(v));
+            }
+        }
+    }
+    map
+}
+
+fn parse_form(body: &str) -> std::collections::HashMap<String, String> {
+    let mut map = std::collections::HashMap::new();
+    for pair in body.split('&') {
+        if let Some((k, v)) = pair.split_once('=') {
+            map.insert(urldecode(k), urldecode(v));
+        }
+    }
+    map
+}
+
+fn urldecode(s: &str) -> String {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'%' if i + 2 < bytes.len() => {
+                let hex = std::str::from_utf8(&bytes[i + 1..i + 3]).unwrap_or("");
+                if let Ok(b) = u8::from_str_radix(hex, 16) {
+                    out.push(b);
+                    i += 3;
+                } else {
+                    out.push(bytes[i]);
+                    i += 1;
+                }
+            }
+            b'+' => {
+                out.push(b' ');
+                i += 1;
+            }
+            b => {
+                out.push(b);
+                i += 1;
+            }
+        }
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+fn urlencode(s: &str) -> String {
+    let mut out = String::new();
+    for b in s.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(b as char)
+            }
+            _ => out.push_str(&format!("%{b:02X}")),
+        }
+    }
+    out
+}
+
+fn authorize_page(client_id: &str, redirect_uri: &str, challenge: &str, state: &str) -> String {
+    let esc = |s: &str| s.replace('&', "&amp;").replace('"', "&quot;").replace('<', "&lt;");
+    format!(
+        r#"<!doctype html><html><head><meta charset="utf-8"><title>mcp-bridge consent</title>
+<style>body{{font-family:system-ui;max-width:420px;margin:3rem auto;padding:0 1rem}}
+input{{width:100%;padding:.5rem;margin-top:.5rem}}button{{margin-top:1rem;padding:.5rem 1.5rem}}</style></head>
+<body><h2>mcp-bridge</h2><p>A cloud chat is asking to run your local coding agents.
+Enter the bridge passphrase to approve.</p>
+<form method="GET" action="/authorize">
+<input type="hidden" name="client_id" value="{}">
+<input type="hidden" name="redirect_uri" value="{}">
+<input type="hidden" name="code_challenge" value="{}">
+<input type="hidden" name="state" value="{}">
+<input type="password" name="passphrase" placeholder="passphrase" autofocus>
+<button type="submit">Approve</button></form></body></html>"#,
+        esc(client_id),
+        esc(redirect_uri),
+        esc(challenge),
+        esc(state)
+    )
+}

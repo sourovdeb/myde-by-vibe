@@ -12,9 +12,15 @@ path = "src/lib.rs"
 name = "mcp-bridge"
 path = "src/main.rs"
 
+[features]
+default = []
+tray = ["dep:tray-icon", "dep:windows-sys"]
+
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tray-icon = { version = "0.19", optional = true }
+windows-sys = { version = "0.59", optional = true, features = ["Win32_UI_WindowsAndMessaging", "Win32_Foundation"] }
 
 [profile.release]
 opt-level = "z"

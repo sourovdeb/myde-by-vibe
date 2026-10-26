@@ -5,4 +5,6 @@ pub mod http;
 pub mod http_admin;
 pub mod jobs;
 pub mod mcp;
+pub mod oauth;
 pub mod runner;
+pub mod tunnel;

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  mcp-bridge MSI definition for cargo-wix.
+  Build ON WINDOWS with:
+    cargo install cargo-wix
+    cargo wix --version  # check current docs/flags first
+    cargo wix -c  # if this file needs regeneration for your cargo-wix version
+    cargo wix      # builds target/release and packages the MSI
+  The `enabled` toggle, tray and tunnel are runtime features; the MSI only
+  lays down the exe and a Start-menu shortcut.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="mcp-bridge" UpgradeCode="7B3A9F2C-6D24-4E8E-9C0B-1A5D4E7F9A21"
+           Language="1033" Codepage="1252" Version="$(var.Version)" Manufacturer="sourovdeb">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of mcp-bridge is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="Main" Title="mcp-bridge" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+    <UIRef Id="WixUI_InstallDir" />
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="mcp-bridge" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AppMenuDir" Name="mcp-bridge" />
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents">
+      <Component Id="MainExecutable" Directory="INSTALLDIR" Guid="*">
+        <File Id="mcpBridgeExe" Source="target/$(var.Profile)/mcp-bridge.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="StartMenuShortcut" Directory="AppMenuDir" Guid="*">
+        <Shortcut Id="StartMenuLink" Name="mcp-bridge"
+                  Target="[INSTALLDIR]mcp-bridge.exe" WorkingDirectory="INSTALLDIR" />
+        <RemoveFolder Id="RemoveAppMenuDir" Directory="AppMenuDir" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\sourovdeb\mcp-bridge" Name="installed"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>

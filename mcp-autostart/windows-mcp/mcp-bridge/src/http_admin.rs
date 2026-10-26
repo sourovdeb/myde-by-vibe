@@ -27,7 +27,8 @@ pub fn handle_admin(
             };
             {
                 let mut cfg = bridge.cfg.write().unwrap();
-                cfg.enabled = parsed.get("enabled").and_then(|v| v.as_bool()).unwrap_or(cfg.enabled);
+                let new_enabled = parsed.get("enabled").and_then(|v| v.as_bool());
+                let new_enabled = match new_enabled { Some(v) => v, None => cfg.enabled };
                 cfg.port = parsed.get("port").and_then(|v| v.as_u64()).map(|v| v as u16).unwrap_or(cfg.port);
                 cfg.admin_port = parsed.get("admin_port").and_then(|v| v.as_u64()).map(|v| v as u16).unwrap_or(cfg.admin_port);
                 cfg.public_url = parsed.get("public_url").and_then(|v| v.as_str()).unwrap_or(&cfg.public_url).to_string();
@@ -42,8 +43,14 @@ pub fn handle_admin(
                         cfg.agents = new_agents;
                     }
                 }
+                let was_enabled = cfg.enabled;
                 let snapshot = cfg.clone();
-                let _ = crate::config::save_config(&snapshot);
+                drop(cfg);
+                if was_enabled != new_enabled {
+                    bridge.set_enabled(new_enabled);
+                } else {
+                    let _ = crate::config::save_config(&snapshot);
+                }
             }
             let b = json!({"saved": true}).to_string();
             crate::http::respond(stream, 200, "OK", &b, "application/json")

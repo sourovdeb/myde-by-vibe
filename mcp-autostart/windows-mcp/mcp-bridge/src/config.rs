@@ -79,6 +79,10 @@ pub struct Config {
     pub public_url: String,
     #[serde(default = "default_passphrase")]
     pub passphrase: String,
+    #[serde(default)]
+    pub tunnel_cmd: String,
+    #[serde(default)]
+    pub tunnel_args: Vec<String>,
 }
 
 fn default_passphrase() -> String {
@@ -124,6 +128,8 @@ impl Default for Config {
             allowed_dirs: vec![],
             public_url: String::new(),
             passphrase: default_passphrase(),
+            tunnel_cmd: String::new(),
+            tunnel_args: vec![],
         }
     }
 }
