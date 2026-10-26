@@ -5,7 +5,7 @@ rem  Created 2026-10-27. Idempotent: safe to run anytime.
 rem
 rem  Starts (skips what's already running):
 rem    1. Latch MCP server (port 3939) + Cloudflare tunnel
-rem    2. Mistral Workflows worker (all 5 enriched workflows)
+rem    2. Mistral Workflows worker (all 6 enriched workflows)
 rem    3. Verifies connectivity and prints status
 rem ============================================================
 setlocal EnableDelayedExpansion
@@ -15,6 +15,7 @@ color 0A
 set "ROOT=E:\ONE-STOP-SHOP\mistral-workflows"
 set "LATCH_DIR=E:\tools\latch"
 set "VENV_PY=%ROOT%\.venv\Scripts\python.exe"
+set "DEPLOYMENT_NAME=one-stop-shop"
 
 echo.
 echo  ============================================
@@ -65,7 +66,9 @@ if not errorlevel 1 (
     )
 )
 echo   Starting workflows worker in new window...
-start "Mistral Workflows Worker" /d "%ROOT%" cmd /k "%VENV_PY% start_worker.py"
+rem The workflows scheduler needs MISTRAL_WORKFLOWS_API_KEY, not MISTRAL_API_KEY.
+rem Override MISTRAL_API_KEY with the workflows key for the worker process only.
+start "Mistral Workflows Worker" /d "%ROOT%" cmd /k "set MISTRAL_API_KEY=%MISTRAL_WORKFLOWS_API_KEY%&& %VENV_PY% start_worker.py"
 echo   Worker launched. Check the new window for registration logs.
 
 :summary

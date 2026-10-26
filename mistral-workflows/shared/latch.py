@@ -21,7 +21,9 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
-import httpx
+from temporalio.workflow import unsafe as _wf_unsafe
+with _wf_unsafe.imports_passed_through():
+    import httpx
 import mistralai.workflows as workflows
 from pydantic import BaseModel, Field
 

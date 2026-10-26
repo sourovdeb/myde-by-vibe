@@ -1,15 +1,15 @@
-r"""Start the Mistral Workflows worker for all 5 enriched workflows.
+r"""Start the Mistral Workflows worker for all enriched workflows.
 
 Usage:
     .venv\Scripts\python.exe start_worker.py
 
-Loads workflow modules by file path (directories have hyphens, so they
-can't be imported as regular packages). Requires MISTRAL_API_KEY in env
-or in a .env file in the project root.
+Syncs workflow files from hyphenated directories into workflow_modules/
+(valid Python package) so Temporal's sandbox can import them. Requires
+MISTRAL_API_KEY (or MISTRAL_WORKFLOWS_API_KEY) and DEPLOYMENT_NAME in env.
 """
 
 import asyncio
-import importlib.util
+import shutil
 import sys
 from pathlib import Path
 
@@ -18,30 +18,40 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from mistralai.workflows.core.worker import run_worker  # noqa: E402
 
+# --- Sync: copy workflow.py from hyphenated dirs into workflow_modules/ ---
+# Temporal's sandbox re-imports the workflow's module by name; hyphenated
+# directories can't be imported as Python packages, so we mirror them here
+# with valid module names. Re-copied on every start so edits propagate.
+SYNC_MAP = {
+    "podcast-producer": "podcast_producer_workflow.py",
+    "wordpress-maintainer": "wordpress_maintainer_workflow.py",
+    "content-scheduler": "content_scheduler_workflow.py",
+    "academic-paper-pipeline": "academic_pipeline_workflow.py",
+    "mishu-critical-thinking-decision-audit": "decision_audit_workflow.py",
+}
 
-def _load_module(name: str, path: Path):
-    """Load a Python module from a file path."""
-    spec = importlib.util.spec_from_file_location(name, path)
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[name] = module
-    spec.loader.exec_module(module)
-    return module
+_wf_dir = PROJECT_ROOT / "workflow_modules"
+_wf_dir.mkdir(exist_ok=True)
+for src_dir, dst_name in SYNC_MAP.items():
+    src = PROJECT_ROOT / src_dir / "workflow.py"
+    dst = _wf_dir / dst_name
+    if src.exists():
+        shutil.copy2(src, dst)
 
-
-# Load each workflow module by file path (dirs have hyphens -> not importable as packages)
-_podcast = _load_module("podcast_producer_workflow", PROJECT_ROOT / "podcast-producer" / "workflow.py")
-_wp = _load_module("wordpress_maintainer_workflow", PROJECT_ROOT / "wordpress-maintainer" / "workflow.py")
-_cs = _load_module("content_scheduler_workflow", PROJECT_ROOT / "content-scheduler" / "workflow.py")
-_acad = _load_module("academic_pipeline_workflow", PROJECT_ROOT / "academic-paper-pipeline" / "workflow.py")
-_decision = _load_module("decision_audit_workflow", PROJECT_ROOT / "mishu-critical-thinking-decision-audit" / "workflow.py")
+# --- Import workflow classes from the synced package ---
+from workflow_modules.podcast_producer_workflow import PodcastProducer  # noqa: E402
+from workflow_modules.wordpress_maintainer_workflow import WordPressMaintainer  # noqa: E402
+from workflow_modules.content_scheduler_workflow import ContentScheduler  # noqa: E402
+from workflow_modules.academic_pipeline_workflow import AcademicPaperPipeline  # noqa: E402
+from workflow_modules.decision_audit_workflow import DecisionReview, MishuDecisionAudit  # noqa: E402
 
 ALL_WORKFLOWS = [
-    _podcast.PodcastProducer,
-    _wp.WordPressMaintainer,
-    _cs.ContentScheduler,
-    _acad.AcademicPaperPipeline,
-    _decision.DecisionReview,
-    _decision.MishuDecisionAudit,
+    PodcastProducer,
+    WordPressMaintainer,
+    ContentScheduler,
+    AcademicPaperPipeline,
+    DecisionReview,
+    MishuDecisionAudit,
 ]
 
 

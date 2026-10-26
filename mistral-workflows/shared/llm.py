@@ -9,7 +9,9 @@ All network I/O lives in activities. Missing keys raise a NON-retryable error (r
 import os
 from datetime import timedelta
 
-import httpx
+from temporalio.workflow import unsafe as _wf_unsafe
+with _wf_unsafe.imports_passed_through():
+    import httpx
 import mistralai.workflows as workflows
 from pydantic import BaseModel, Field
 

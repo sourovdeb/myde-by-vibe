@@ -11,7 +11,7 @@ import os
 import re
 from pathlib import Path
 
-VIBE_HOME = Path(os.environ.get("VIBE_HOME", str(Path.home() / ".vibe")))
+VIBE_HOME = Path(os.environ.get("VIBE_HOME", os.path.expanduser("~/.vibe")))
 _LINE = re.compile(r"^\s*(?:export\s+)?([A-Z][A-Z0-9_]{1,63})\s*=\s*(.*?)\s*$")
 _loaded: list[str] = []
 
