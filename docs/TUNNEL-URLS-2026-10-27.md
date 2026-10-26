@@ -26,3 +26,24 @@ system_info_extended
 - Latch (3939): list_files, read_file, search_files, write_file, run_task, control_desktop
 - my-mcp-connector (3000): health_check, system_info, one_stop_shop_status, credential_env_present, vibe_skill_list
 - browser-control-mcp (3001): 15 browser_* tools
+
+## Mistral AI Connector (NEW 2026-10-27 ~01:10 UTC)
+
+- **Connector name:** `sourov_gateway_full_pc_control_7b5b`
+- **Connector ID:** `01a17a0a-7493-7374-8092-2902122ff01c`
+- **Server:** `https://things-clerk-houston-gras.trycloudflare.com/mcp`
+- **Auth:** Bearer token (credential `gateway-bearer-auth`, valid, default)
+- **Tools:** 39 detected via `refreshTools`
+- **Status:** Authenticated, ready for Mistral AI Work
+- **Setup doc:** `docs/MISTRAL-GATEWAY-CONNECTOR-2026-10-27.md`
+
+## Sourov Control Center (NEW 2026-10-27 ~01:07 UTC)
+
+- **Location:** `E:\tools\sourov-control-center\dist\Sourov Control Center.exe`
+- **Size:** 11.5 MB (single .exe, PyInstaller onefile)
+- **RAM:** ~68 MB private (~113 MB working set with WebView2)
+- **Engine:** Python 3.12 + pywebview 6.2 (WebView2)
+- **Autostart:** Startup folder shortcut + VBS script
+- **Desktop shortcut:** Created
+- **Taskbar:** Pinned
+- **Source:** `sourov-control-center/` in this repo
