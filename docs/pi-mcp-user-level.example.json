@@ -1,0 +1,17 @@
+{
+    "mcpServers": {
+        "unified-gateway": {
+            "type": "streamable-http",
+            "url": "https://things-clerk-houston-gras.trycloudflare.com/mcp",
+            "headers": {
+                "Authorization": "Bearer ${GATEWAY_AUTH_TOKEN}"
+            },
+            "timeout": 60,
+            "description": "Unified MCP Gateway (Cloudflare Tunnel) — 39 tools: 26 proxied + 13 native PC control tools. Bearer token auth required."
+        },
+        "latch": {
+            "url": "https://jason-salvador-known-stood.trycloudflare.com/mcp/pi",
+            "description": "Latch MCP — Local PC tools: file read/list/search + DaVinci Resolve and OBS Studio control via run_task"
+        }
+    }
+}
