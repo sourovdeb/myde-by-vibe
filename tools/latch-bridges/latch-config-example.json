@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "server_on": true,
+  "name": "Latch",
+  "public_url": "https://YOUR-TUNNEL-URL.trycloudflare.com",
+  "port": 3939,
+  "token": "YOUR-TOKEN-HERE",
+  "caps": {
+    "read": true,
+    "edit": false,
+    "scripts": true,
+    "desktop": false
+  },
+  "providers": {
+    "grok": {
+      "read": false,
+      "edit": false,
+      "scripts": false,
+      "desktop": false
+    },
+    "mistral": {
+      "read": true,
+      "edit": false,
+      "scripts": true,
+      "desktop": false
+    },
+    "chatgpt": {
+      "read": false,
+      "edit": false,
+      "scripts": false,
+      "desktop": false
+    },
+    "pi": {
+      "read": false,
+      "edit": false,
+      "scripts": false,
+      "desktop": false
+    }
+  },
+  "folders": [
+    "E:\\tools\\latch-share"
+  ],
+  "commands": [
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\resolve_cmd.py status",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\resolve_cmd.py list_projects",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\resolve_cmd.py get_current",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\resolve_cmd.py list_timelines",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\resolve_cmd.py get_timeline_info",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\resolve_cmd.py list_media_pool",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\resolve_cmd.py get_resolve_version",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py status",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py get_version",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py list_scenes",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py get_current_scene",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py list_sources",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py get_stream_status",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py get_record_status",
+    "C:\\Users\\souro\\.local\\bin\\python3.12.exe E:\\tools\\latch-bridges\\obs_cmd.py list_profiles"
+  ],
+  "apps": [],
+  "grok_model": "grok-4.6",
+  "mistral_model": "mistral-large-latest"
+}
