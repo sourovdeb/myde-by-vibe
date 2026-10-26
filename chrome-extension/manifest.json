@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Double Control Extension",
-  "version": "2.0.0",
-  "description": "Chrome extension for double control v2 - tabs, browser-harness MCP (3000/3001), and Latch MCP (3939) with Resolve/OBS bridges",
+  "version": "2.1.0",
+  "description": "Chrome extension for double control v2.1 - tabs, browser-harness MCP (3000/3001), Latch MCP (3939) with start/stop toggle + debug, and Unified MCP Gateway (3002)",
 
   "permissions": [
     "tabs",
@@ -15,6 +15,8 @@
     "<all_urls>",
     "http://localhost:3939/*",
     "http://127.0.0.1:3939/*",
+    "http://localhost:3002/*",
+    "http://127.0.0.1:3002/*",
     "https://*.trycloudflare.com/*"
   ],
 
