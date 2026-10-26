@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>mcp-bridge operator</title>
+  <style>
+    body { font: 15px/1.45 system-ui, sans-serif; max-width: 720px; margin: 24px auto; padding: 0 16px; color: #1a1a1a; }
+    h1 { font-size: 22px; }
+    a, button { font: inherit; }
+    button, .linkish { display: inline-block; margin: 4px 6px 4px 0; padding: 8px 12px; background: #1565c0; color: #fff; border: 0; border-radius: 6px; text-decoration: none; cursor: pointer; }
+    button.secondary, a.secondary { background: #546e7a; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px 14px; margin: 12px 0; }
+    .muted { color: #666; font-size: 13px; }
+    pre { background: #f6f6f6; padding: 10px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>mcp-bridge — do it from here</h1>
+  <p class="muted">PR <a href="https://github.com/sourovdeb/myde-by-vibe/pull/3">sourovdeb/myde-by-vibe#3</a>. This page does not change Latch. Bridge settings stay on the local admin port.</p>
+
+  <div class="card">
+    <h2>Open the real controls</h2>
+    <p>The bridge already has On/Off, agents, folders, and tunnel start/stop.</p>
+    <a href="http://127.0.0.1:8766/">Open bridge settings (127.0.0.1:8766)</a>
+    <a class="secondary" href="https://github.com/sourovdeb/myde-by-vibe/pull/3">PR #3</a>
+    <p class="muted">If the button does nothing, the process is not running. Start it, then reload this page.</p>
+    <pre>mcp-bridge.exe
+mcp-bridge.exe --check</pre>
+  </div>
+
+  <div class="card">
+    <h2>What you can do</h2>
+    <ul>
+      <li>Turn the bridge off or on from the settings page (that toggle starts and stops the tunnel).</li>
+      <li>Enable or disable each local agent, and set read-only vs write, without recompiling.</li>
+      <li>Run a named workflow: podcast-producer, wordpress-maintainer, academic-paper-pipeline, content-scheduler, mishu-critical-thinking-decision-audit.</li>
+      <li>Copy the public connector URL from the tray or from <code>mcp-bridge.exe --check</code>.</li>
+    </ul>
+    <p class="muted">Latch (port 3939) is a different program. Use its own panel. This page will not write latch.json.</p>
+  </div>
+
+  <div class="card">
+    <h2>Quick local check</h2>
+    <button id="ping" type="button">Ping 8765 /healthz</button>
+    <button id="admin" class="secondary" type="button">Ping 8766</button>
+    <pre id="out">Not checked.</pre>
+  </div>
+  <script>
+    async function ping(url) {
+      const out = document.getElementById('out');
+      out.textContent = 'Checking ' + url;
+      try {
+        const r = await fetch(url, { method: 'GET' });
+        out.textContent = url + ' → HTTP ' + r.status;
+      } catch (e) {
+        out.textContent = url + ' → not reachable (' + (e.message || e) + '). Start mcp-bridge.exe first.';
+      }
+    }
+    document.getElementById('ping').onclick = () => ping('http://127.0.0.1:8765/healthz');
+    document.getElementById('admin').onclick = () => ping('http://127.0.0.1:8766/');
+  </script>
+</body>
+</html>

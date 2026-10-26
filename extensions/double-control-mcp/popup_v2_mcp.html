@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Double Control - MCP</title>
+  <style>
+    body { width: 460px; padding: 12px; font: 13px/1.4 Arial, sans-serif; background: #f5f5f5; }
+    h1 { font-size: 16px; margin: 0 0 8px; color: #333; }
+    h2 { font-size: 13px; margin: 14px 0 6px; color: #444; text-transform: uppercase; letter-spacing: .04em; }
+    .row { display: flex; gap: 6px; margin-bottom: 6px; }
+    select, input[type=text] { padding: 6px; flex: 1; font: 12px monospace; }
+    textarea { width: 100%; box-sizing: border-box; height: 52px; font: 12px monospace; padding: 6px; }
+    button { padding: 6px 10px; background: #2196f3; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #1976d2; }
+    button.secondary { background: #777; }
+    .card { background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin: 6px 0; }
+    .tab-item { padding: 6px; margin: 4px 0; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+    .tab-item:hover { background: #e3f2fd; }
+    .tab-title { font-weight: bold; }
+    .tab-url { font-size: 11px; color: #666; word-break: break-all; }
+    .ep { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dashed #eee; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+    .on { background: #4caf50; } .off { background: #e53935; }
+    .muted { color: #888; font-size: 11px; }
+    pre { white-space: pre-wrap; word-break: break-word; font-size: 11px; max-height: 120px; overflow: auto; background: #fafafa; padding: 6px; border-radius: 4px; }
+    #status { color: #d32f2f; min-height: 14px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Double Control - MCP Enhanced</h1>
+
+  <h2>Keys</h2>
+  <div class="row">
+    <input type="text" id="keyInput" placeholder="MISTRAL_API_KEY (paste once; stored locally only)" autocomplete="off">
+    <button id="keySet">Save</button>
+  </div>
+  <div id="keyStatus" class="muted">Key status: checking...</div>
+
+  <h2>WordPress credentials</h2>
+  <div class="card">
+    <div class="row">
+      <input type="text" id="wpSite" placeholder="Site URL, e.g. https://sourovdeb.com" autocomplete="off">
+    </div>
+    <div class="row">
+      <input type="text" id="wpUser" placeholder="username (optional, for display only)" style="flex:1" autocomplete="off">
+      <input type="password" id="wpPass" placeholder="Application password (stored locally only, never shown again)" style="flex:2" autocomplete="new-password">
+      <button id="wpSet">Save</button>
+    </div>
+    <div id="wpStatus" class="muted">WordPress credentials: checking...</div>
+  </div>
+
+  <h2>Latch and mcp-bridge</h2>
+  <div class="card" id="bridgeCard">
+    <p class="muted">Off stops this extension from calling them. It does not edit Latch settings or kill a process.</p>
+    <div class="ep"><span><span class="dot off" id="latchDot"></span>Latch 3939</span><span id="latchMeta" class="muted">not checked</span></div>
+    <div class="row">
+      <button id="latchOff" class="secondary">Latch calls off</button>
+      <button id="latchOn">Latch calls on</button>
+      <button id="latchDebug" class="secondary">Debug Latch</button>
+    </div>
+    <div class="ep"><span><span class="dot off" id="bridgeDot"></span>mcp-bridge 8765</span><span id="bridgeMeta" class="muted">not checked</span></div>
+    <div class="row">
+      <button id="bridgeOff" class="secondary">Bridge calls off</button>
+      <button id="bridgeOn">Bridge calls on</button>
+      <button id="bridgeDebug" class="secondary">Debug bridge</button>
+    </div>
+    <div class="row">
+      <button id="openBridgeAdmin" class="secondary">Open bridge settings</button>
+      <button id="openPr3" class="secondary">Open PR #3</button>
+    </div>
+    <pre id="bridgeOut">Tool names appear here. No tokens are shown.</pre>
+  </div>
+
+  <h2>MCP servers</h2>
+  <div class="card">
+    <div class="row"><button id="healthBtn">Check /health</button><button class="secondary" id="toolsBtn" style="flex:1">List tools for selected</button></div>
+    <div id="endpoints"></div>
+    <div class="row" style="margin-top:6px">
+      <select id="toolServer"></select>
+    </div>
+    <div id="toolList" class="muted">Tool list appears here.</div>
+  </div>
+
+  <h2>AI Agents</h2>
+  <div class="card">
+    <div class="row">
+      <button id="agentsDiscover">Discover Agents</button>
+      <button class="secondary" id="agentsRefresh">Refresh</button>
+      <select id="capabilityFilter" style="flex:2">
+        <option value="">All Capabilities</option>
+        <option value="browser_automation">Browser Automation</option>
+        <option value="embeddings">Embeddings</option>
+        <option value="code_generation">Code Generation</option>
+        <option value="wordpress_management">WordPress</option>
+      </select>
+    </div>
+    <div id="agentsList"></div>
+    <div id="agentsStatus" class="muted">Agent discovery: click Discover</div>
+  </div>
+
+  <h2>Embed (Mistral)</h2>
+  <div class="card">
+    <div class="row">
+      <textarea id="embedText" placeholder="Text to embed"></textarea>
+    </div>
+    <div class="row">
+      <select id="embedModel">
+        <option value="mistral-embed-2312">mistral-embed-2312 (general, 1024-d)</option>
+        <option value="codestral-embed-2505">codestral-embed-2505 (code, 1536-d)</option>
+      </select>
+      <button id="embedBtn">Embed</button>
+      <button class="secondary" id="pageBtn">Embed page</button>
+    </div>
+    <div id="embedOut" class="muted">Vector summary appears here.</div>
+    <div class="row" style="margin-top:8px">
+      <input type="text" id="simQuery" placeholder="Find similar tabs: e.g. browser automation" style="flex:2">
+      <input type="number" id="simThresh" value="0.7" step="0.05" min="0" max="1" title="similarity threshold" style="width:56px">
+      <input type="number" id="simLimit" value="10" step="1" min="1" max="50" title="max results" style="width:48px">
+      <button id="simBtn">Find</button>
+    </div>
+    <div id="simOut" class="muted">Semantic tab search results appear here.</div>
+  </div>
+
+  <h2>Remote Debug</h2>
+  <div class="card">
+    <div class="row">
+      <button id="rdCheck">Check port 9222</button>
+      <button class="secondary" id="rdLaunch">Show launch command</button>
+    </div>
+    <div id="rdOut" class="muted">CDP status appears here.</div>
+    <pre id="rdCmd" style="display:none"></pre>
+  </div>
+
+  <h2>Tabs</h2>
+  <div class="card">
+    <div class="row"><button id="refreshBtn">Refresh</button><input type="text" id="openUrl" placeholder="https://... - Open"><button class="secondary" id="openBtn">Open</button></div>
+    <div id="tabsList"></div>
+  </div>
+
+  <div id="status"></div>
+  <script src="popup_v2_mcp.js"></script>
+</body>
+</html>

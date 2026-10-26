@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Double Control Extension - MCP Enhanced",
+  "version": "2.0.0",
+  "description": "Chrome extension for double control with MCP support - browser automation, embeddings, and remote debugging",
+  
+  "permissions": [
+    "tabs",
+    "storage",
+    "scripting",
+    "activeTab",
+    "nativeMessaging",
+    "webRequest",
+    "webRequestAuthProvider"
+  ],
+  
+  "host_permissions": [
+    "<all_urls>",
+    "http://localhost:3000/*",
+    "http://localhost:3001/*",
+    "http://localhost:3002/*",
+    "http://localhost:3003/*",
+    "https://chocolate-loading-scanning-matthew.trycloudflare.com/*",
+    "https://api.mistral.ai/*",
+    "http://127.0.0.1:9222/*",
+    "http://localhost:9222/*",
+    "http://127.0.0.1:3939/*",
+    "http://localhost:3939/*",
+    "http://127.0.0.1:8765/*",
+    "http://localhost:8765/*",
+    "http://127.0.0.1:8766/*",
+    "http://localhost:8766/*"
+  ],
+  
+  "background": {
+    "service_worker": "background_v2_mcp.js",
+    "type": "module"
+  },
+  
+  "action": {
+    "default_popup": "popup_v2_mcp.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  
+  "externally_connectable": {
+    "matches": ["*://*/*"],
+    "ids": [
+      "kchpjdkgbodcdakbchohnfjkodbcjpeg"
+    ]
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content_script_mcp.js"],
+      "run_at": "document_end"
+    }
+  ],
+  
+  "native_messaging": {
+    "allowed_origins": ["<all_urls>"]
+  }
+}
