@@ -1,0 +1,22 @@
+{
+  "name": "double-control-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension for double control - works with browser-harness",
+  "main": "external_tool.js",
+  "scripts": {
+    "start": "node external_tool.js",
+    "bridge": "python extension_bridge.py"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  },
+  "keywords": [
+    "chrome",
+    "extension",
+    "automation",
+    "browser",
+    "double-control"
+  ],
+  "author": "Sourov",
+  "license": "MIT"
+}

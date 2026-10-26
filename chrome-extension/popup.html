@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Double Control v2</title>
+  <style>
+    body {
+      width: 420px;
+      max-height: 600px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      overflow-y: auto;
+    }
+    h1 {
+      font-size: 16px;
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+    h2 {
+      font-size: 13px;
+      margin: 12px 0 6px 0;
+      color: #555;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 4px;
+    }
+    .tabs-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+    }
+    .tab-item {
+      padding: 6px;
+      margin: 3px 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .tab-item:hover { background: #e3f2fd; }
+    .tab-item.active {
+      background: #2196f3;
+      color: white;
+      border-color: #1976d2;
+    }
+    .tab-title { font-weight: bold; margin-bottom: 2px; }
+    .tab-url { font-size: 11px; color: #666; word-break: break-all; }
+    .tab-item.active .tab-url { color: #e3f2fd; }
+    .status {
+      padding: 8px;
+      background: #4caf50;
+      color: white;
+      text-align: center;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    button {
+      padding: 6px 10px;
+      background: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 4px 4px 0 0;
+      font-size: 12px;
+    }
+    button:hover { background: #1976d2; }
+    .mcp-status {
+      margin-top: 6px;
+      padding: 6px;
+      font-size: 11px;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      font-family: monospace;
+    }
+    .mcp-ok { background: #e8f5e9; color: #2e7d32; }
+    .mcp-down { background: #ffebee; color: #c62828; }
+    .latch-tools {
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 11px;
+      font-family: monospace;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 4px;
+      margin-top: 4px;
+    }
+    .latch-tools div { padding: 1px 0; color: #555; }
+    .tunnel-url {
+      font-size: 10px;
+      color: #888;
+      word-break: break-all;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Double Control v2.0.0</h1>
+
+  <h2>Tabs</h2>
+  <div id="status" class="status">Loading tabs...</div>
+  <div id="tabsList" class="tabs-list"></div>
+  <button id="refreshBtn">Refresh Tabs</button>
+  <button id="remoteDebugBtn" style="background:#ff9800;">Remote Debugging</button>
+
+  <h2>MCP Servers (3000 / 3001)</h2>
+  <div id="mcpStatus" class="mcp-status">Checking MCP servers...</div>
+
+  <h2>Latch MCP (3939)</h2>
+  <div id="latchStatus" class="mcp-status">Checking Latch MCP...</div>
+  <div id="latchTunnel" class="tunnel-url"></div>
+  <div id="latchTools" class="latch-tools" style="display:none;"></div>
+  <button id="latchRefreshBtn">Refresh Latch</button>
+  <button id="openPanelBtn" style="background:#4caf50;">Open Latch Panel</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
