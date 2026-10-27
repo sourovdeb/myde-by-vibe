@@ -1,0 +1,1250 @@
+[
+ {
+  "cluster_id": 1,
+  "canonical": "code-audit",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "code-audit",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "code-audit",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "code-audit",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description across three trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 2,
+  "canonical": "code-review",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "code-review",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "code-review",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "code-review",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description across three trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 3,
+  "canonical": "debug-cycle",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "debug-cycle",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "debug-cycle",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "debug-cycle",
+    "tree": "pi",
+    "action": "archive"
+   },
+   {
+    "name": "systematic-debugging",
+    "tree": "apps",
+    "action": "merge"
+   }
+  ],
+  "rationale": "debug-cycle copies are identical across trees; systematic-debugging performs the same step-by-step root-cause debugging job with >80% overlap.",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 4,
+  "canonical": "dev-cycle",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "dev-cycle",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "dev-cycle",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "dev-cycle",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description across three trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 5,
+  "canonical": "deep-brainstorm",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "deep-brainstorm",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "deep-brainstorm",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 6,
+  "canonical": "qa-verify",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "qa-verify",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "qa-verify",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "qa-verify",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description across three trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 7,
+  "canonical": "security-audit",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "security-audit",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "security-audit",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "security-audit",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description across three trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 8,
+  "canonical": "self-debate",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "self-debate",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "self-debate",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 9,
+  "canonical": "browser-control-mcp",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "browser-control-mcp",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "browser-control-mcp",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 10,
+  "canonical": "latch-mcp",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "latch-mcp",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "latch-mcp",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 11,
+  "canonical": "mcp-control",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mcp-control",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mcp-control",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 12,
+  "canonical": "my-mcp-connector",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "my-mcp-connector",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "my-mcp-connector",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 13,
+  "canonical": "unified-mcp-gateway",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "unified-mcp-gateway",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "unified-mcp-gateway",
+    "tree": "pi",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 14,
+  "canonical": "mishu-provider-capability-router",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-provider-capability-router",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-provider-capability-router",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "cost-aware-provider-router",
+    "tree": "H",
+    "action": "merge"
+   },
+   {
+    "name": "cost-aware-provider-router",
+    "tree": "H",
+    "action": "archive"
+   }
+  ],
+  "rationale": "All four route text/OCR/transcription work to available AI providers based on capability and cost; >80% functional overlap.",
+  "confidence": 0.9
+ },
+ {
+  "cluster_id": 15,
+  "canonical": "mishu-humanizer",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-humanizer",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-humanizer",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "humanizer",
+    "tree": "H",
+    "action": "merge"
+   },
+   {
+    "name": "humanizer",
+    "tree": "H",
+    "action": "archive"
+   }
+  ],
+  "rationale": "All four strip formulaic/AI-sounding prose and restore natural voice; >80% functional overlap.",
+  "confidence": 0.92
+ },
+ {
+  "cluster_id": 16,
+  "canonical": "mishu-apps-script-automation",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-apps-script-automation",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-apps-script-automation",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical name and description in two trees; single canonical copy in primary home.",
+  "confidence": 0.99
+ },
+ {
+  "cluster_id": 17,
+  "canonical": "mishu-audiobook-performance-coach",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-audiobook-performance-coach",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-audiobook-performance-coach",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "audiobook",
+    "tree": "apps",
+    "action": "merge"
+   },
+   {
+    "name": "audiobook-performance-coach",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "All four prepare supplied prose into separate reading and pronunciation scripts for narration; >80% overlap.",
+  "confidence": 0.93
+ },
+ {
+  "cluster_id": 18,
+  "canonical": "mishu-career-application-workflow",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-career-application-workflow",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-career-application-workflow",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 19,
+  "canonical": "mishu-continuity-canon",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-continuity-canon",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-continuity-canon",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 20,
+  "canonical": "mishu-critical-thinking-decision-audit",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-critical-thinking-decision-audit",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-critical-thinking-decision-audit",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 21,
+  "canonical": "mishu-deep-online-investigation",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-deep-online-investigation",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-deep-online-investigation",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 22,
+  "canonical": "mishu-dialogue-editor",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-dialogue-editor",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-dialogue-editor",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 23,
+  "canonical": "mishu-document-file-workbench",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-document-file-workbench",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-document-file-workbench",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 24,
+  "canonical": "mishu-editorial-feedback",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-editorial-feedback",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-editorial-feedback",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 25,
+  "canonical": "mishu-educational-publishing-pipeline",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-educational-publishing-pipeline",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-educational-publishing-pipeline",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 26,
+  "canonical": "mishu-elt365-micro-lesson",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-elt365-micro-lesson",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-elt365-micro-lesson",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 27,
+  "canonical": "mishu-evidence-dossier",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-evidence-dossier",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-evidence-dossier",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 28,
+  "canonical": "mishu-evidence-translation",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-evidence-translation",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-evidence-translation",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 29,
+  "canonical": "mishu-faithful-book-illumination",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-faithful-book-illumination",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-faithful-book-illumination",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 30,
+  "canonical": "mishu-fiction-brainstorm",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-fiction-brainstorm",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-fiction-brainstorm",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 31,
+  "canonical": "mishu-fiction-continue",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-fiction-continue",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-fiction-continue",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 32,
+  "canonical": "mishu-fiction-description",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-fiction-description",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-fiction-description",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 33,
+  "canonical": "mishu-fiction-expand",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-fiction-expand",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-fiction-expand",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 34,
+  "canonical": "mishu-fiction-rewrite",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-fiction-rewrite",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-fiction-rewrite",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 35,
+  "canonical": "mishu-goal-router",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-goal-router",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-goal-router",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 36,
+  "canonical": "mishu-lecture-to-lessons",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-lecture-to-lessons",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-lecture-to-lessons",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 37,
+  "canonical": "mishu-lightweight-video-editing",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-lightweight-video-editing",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-lightweight-video-editing",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 38,
+  "canonical": "mishu-memoir-interviewer",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-memoir-interviewer",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-memoir-interviewer",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 39,
+  "canonical": "mishu-memoir-manuscript",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-memoir-manuscript",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-memoir-manuscript",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 40,
+  "canonical": "mishu-mistral-writing-director",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-mistral-writing-director",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-mistral-writing-director",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 41,
+  "canonical": "mishu-narrative-benchmark",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-narrative-benchmark",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-narrative-benchmark",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 42,
+  "canonical": "mishu-personal-admin-navigator",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-personal-admin-navigator",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-personal-admin-navigator",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 43,
+  "canonical": "mishu-project-library-curator",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-project-library-curator",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-project-library-curator",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 44,
+  "canonical": "mishu-research-publication",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-research-publication",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-research-publication",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 45,
+  "canonical": "mishu-research-synthesis-reference-audit",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-research-synthesis-reference-audit",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-research-synthesis-reference-audit",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 46,
+  "canonical": "mishu-reusable-storyboard-assets",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-reusable-storyboard-assets",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-reusable-storyboard-assets",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 47,
+  "canonical": "mishu-skill-architect",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-skill-architect",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-skill-architect",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 48,
+  "canonical": "mishu-software-utility-builder",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-software-utility-builder",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-software-utility-builder",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 49,
+  "canonical": "mishu-story-bible-context",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-story-bible-context",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-story-bible-context",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 50,
+  "canonical": "mishu-story-development-director",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-story-development-director",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-story-development-director",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 51,
+  "canonical": "mishu-style-discovery",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-style-discovery",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-style-discovery",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 52,
+  "canonical": "mishu-teacher-training-site",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-teacher-training-site",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-teacher-training-site",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 53,
+  "canonical": "mishu-teaching-materials-methods",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-teaching-materials-methods",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-teaching-materials-methods",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 54,
+  "canonical": "mishu-transcript-visual-director",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-transcript-visual-director",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-transcript-visual-director",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 55,
+  "canonical": "mishu-verified-outreach-mail",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-verified-outreach-mail",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-verified-outreach-mail",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 56,
+  "canonical": "mishu-weekly-reading-sentence-lab",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-weekly-reading-sentence-lab",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-weekly-reading-sentence-lab",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 57,
+  "canonical": "mishu-wordpress-operations",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-wordpress-operations",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-wordpress-operations",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 58,
+  "canonical": "mishu-youtube-evidence-auditor",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-youtube-evidence-auditor",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-youtube-evidence-auditor",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Same skill name across vibe and apps trees",
+  "confidence": 0.95
+ },
+ {
+  "cluster_id": 59,
+  "canonical": "mishu-scene-planner-drafter",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "mishu-scene-planner-drafter",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-scene-planner-drafter",
+    "tree": "apps",
+    "action": "archive"
+   },
+   {
+    "name": "scene-draft",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Both draft scenes from approved story beats",
+  "confidence": 0.88
+ },
+ {
+  "cluster_id": 60,
+  "canonical": "sourov-rigorous-analysis",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "sourov-rigorous-analysis",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "mishu-rigorous-analysis",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Identical description; different naming convention for same function",
+  "confidence": 0.88
+ },
+ {
+  "cluster_id": 61,
+  "canonical": "hermes-resolve-workflows",
+  "canonical_tree": "vibe",
+  "members": [
+   {
+    "name": "hermes-resolve-workflows",
+    "tree": "vibe",
+    "action": "keep"
+   },
+   {
+    "name": "sourov-studio-launcher",
+    "tree": "vibe",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Both implement CLEAN/BOOK/TEACH Resolve workflow modes",
+  "confidence": 0.85
+ },
+ {
+  "cluster_id": 62,
+  "canonical": "empathetic-listening",
+  "canonical_tree": "apps",
+  "members": [
+   {
+    "name": "empathetic-listening",
+    "tree": "apps",
+    "action": "keep"
+   },
+   {
+    "name": "empathic-listening-psychology",
+    "tree": "apps",
+    "action": "archive"
+   }
+  ],
+  "rationale": "Both provide listening-first emotional and psychological support",
+  "confidence": 0.85
+ }
+]

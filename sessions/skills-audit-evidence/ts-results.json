@@ -1,0 +1,58 @@
+[
+ {
+  "cluster_id": 3,
+  "canonical": "debug-cycle",
+  "others": "systematic-debugging(apps)",
+  "typesafe": "OVERLAP (conf 0.97, prov typesafe)",
+  "model": "jev-1.14.0"
+ },
+ {
+  "cluster_id": 14,
+  "canonical": "mishu-provider-capability-router",
+  "others": "cost-aware-provider-router(H), cost-aware-provider-router(H)",
+  "typesafe": "OVERLAP (conf 0.76, prov typesafe)",
+  "model": "jev-1.14.0"
+ },
+ {
+  "cluster_id": 15,
+  "canonical": "mishu-humanizer",
+  "others": "humanizer(H), humanizer(H)",
+  "typesafe": "OVERLAP (conf 0.75, prov typesafe)",
+  "model": "jev-1.14.0"
+ },
+ {
+  "cluster_id": 17,
+  "canonical": "mishu-audiobook-performance-coach",
+  "others": "audiobook(apps), audiobook-performance-coach(apps)",
+  "typesafe": "OVERLAP (conf 0.81, prov typesafe)",
+  "model": "jev-1.14.0"
+ },
+ {
+  "cluster_id": 59,
+  "canonical": "mishu-scene-planner-drafter",
+  "others": "scene-draft(apps)",
+  "typesafe": "OVERLAP (conf 0.47, prov typesafe)",
+  "model": "jev-1.14.0"
+ },
+ {
+  "cluster_id": 60,
+  "canonical": "sourov-rigorous-analysis",
+  "others": "mishu-rigorous-analysis(apps)",
+  "typesafe": "OVERLAP (conf 0.85, prov typesafe)",
+  "model": "jev-1.14.0"
+ },
+ {
+  "cluster_id": 61,
+  "canonical": "hermes-resolve-workflows",
+  "others": "sourov-studio-launcher(vibe)",
+  "typesafe": "PARTIAL (conf 0.36, prov typesafe)",
+  "model": "jev-1.14.0"
+ },
+ {
+  "cluster_id": 62,
+  "canonical": "empathetic-listening",
+  "others": "empathic-listening-psychology(apps)",
+  "typesafe": "OVERLAP (conf 0.91, prov typesafe)",
+  "model": "jev-1.14.0"
+ }
+]
