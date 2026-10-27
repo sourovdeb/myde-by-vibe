@@ -9,6 +9,8 @@ param([switch]$Loop)
 
 $ErrorActionPreference = 'Continue'
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+$script:lastAttempt = @{}   # dedupe: don't re-spawn within 10 minutes
+$retryWindowMin = 10
 $cfgPath = Join-Path $here 'mcp-watchdog.config.json'
 if (-not (Test-Path $cfgPath)) {
   $cfgPath = 'C:\Users\souro\.mcp-autostart\mcp-watchdog.config.json'
@@ -83,13 +85,18 @@ while ($true) {
     $alive = Test-Port $s.port
     $entry = [ordered]@{ alive = $alive; port = $s.port; pid = $(Find-PidOnPort $s.port) }
     if (-not $alive -and $s.auto_restart) {
+      $last = $script:lastAttempt.$($s.name)
+      $recent = ($last -and ((Get-Date) - $last) -lt (New-TimeSpan -Minutes $retryWindowMin))
       if ($state.free_mb -lt $s.ram_guard_mb) {
         $state.warnings += "restart-skipped $($s.name): free RAM $([math]::Round($state.free_mb/1MB,1)) GB < guard $($s.ram_guard_mb) MB"
         Write-Log "skip restart $($s.name) (RAM guard)"
+      } elseif ($recent) {
+        Write-Log "skip restart $($s.name): already attempted within $retryWindowMin min"
       } else {
         Write-Log "starting $($s.name) -> $($s.start_cmd)"
         Start-Process -FilePath 'cmd.exe' -ArgumentList "/c `"$($s.start_cmd)`"" -WindowStyle Hidden
         $entry.restart_attempt = $true
+        $script:lastAttempt.$($s.name) = Get-Date
       }
     } elseif (-not $alive) {
       $state.warnings += "down $($s.name): no listener on $($s.port) and auto_restart=false"
