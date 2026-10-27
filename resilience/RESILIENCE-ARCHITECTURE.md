@@ -86,6 +86,9 @@
 
 # Custom interval
 .\health-monitor.ps1 -IntervalSeconds 60
+
+# With Cloudflare tunnel check (URL is ephemeral — update after tunnel restarts)
+.\health-monitor.ps1 -TunnelUrl 'https://your-current-tunnel.trycloudflare.com'
 ```
 
 ### 2. Watchdog (`watchdog.ps1`)
@@ -128,7 +131,8 @@
 
 **Usage:**
 ```powershell
-.\tunnel-failover.ps1
+# PrimaryUrl is REQUIRED (tunnel URLs are ephemeral)
+.\tunnel-failover.ps1 -PrimaryUrl 'https://your-current-tunnel.trycloudflare.com/health'
 .\tunnel-failover.ps1 -PrimaryUrl 'https://custom-tunnel.trycloudflare.com/health' -CheckIntervalSeconds 30
 ```
 
@@ -156,10 +160,14 @@ Service down?
 # Start all three monitors as background processes
 .\start-all.ps1
 
-# Or start individually
-.\health-monitor.ps1 &
-.\watchdog.ps1 &
-.\tunnel-failover.ps1 &
+# With tunnel monitoring (pass current tunnel URL)
+.\start-all.ps1 -TunnelUrl 'https://your-current-tunnel.trycloudflare.com'
+
+# Dry run (watchdog shows what it would restart)
+.\start-all.ps1 -DryRun
+
+# Health monitor only
+.\start-all.ps1 -HealthOnly
 ```
 
 ---
@@ -202,5 +210,5 @@ All three .exe builds are automated via GitHub Actions:
 
 1. **Tunnel failover requires manual connector update** — Mistral AI connectors can't be updated programmatically from this PC without browser automation. The status JSON includes the exact action needed.
 2. **Watchdog process matching** — Uses `CommandLine` and `Path` heuristics to find stale processes. May need refinement if process names change.
-3. **Cloudflare tunnel URLs are ephemeral** — Every cloudflared restart generates a new URL. The health-monitor and tunnel-failover scripts reference the current URL; update after manual tunnel restarts.
+3. **Cloudflare tunnel URLs are ephemeral** — Every cloudflared restart generates a new URL. The health-monitor's tunnel check is now optional (pass `-TunnelUrl`); the tunnel-failover requires `-PrimaryUrl`. Update both after every tunnel restart. As of 2026-10-27, all tunnel URLs in the TUNNEL-URLS doc are stale (NXDOMAIN) — tunnels need restart.
 4. **No alerting** — The system logs and writes status files but doesn't send notifications (email, SMS, etc.). The `notify` tool in the gateway could be extended for this.

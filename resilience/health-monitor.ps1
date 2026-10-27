@@ -16,7 +16,8 @@
 param(
     [int]$IntervalSeconds = 30,
     [switch]$Once,
-    [string]$StatusFile = (Join-Path $PSScriptRoot "status.json")
+    [string]$StatusFile = (Join-Path $PSScriptRoot "status.json"),
+    [string]$TunnelUrl = ''
 )
 
 $ErrorActionPreference = 'Continue'
@@ -30,10 +31,14 @@ $Services = @(
 )
 
 # External checks
+# NOTE: Cloudflare tunnel URLs are ephemeral — update $TunnelUrl after every cloudflared restart.
+# If $TunnelUrl is empty, the tunnel check is skipped.
 $ExternalChecks = @(
-    @{ Name = 'cloudflare-tunnel'; Url = 'https://things-clerk-houston-gras.trycloudflare.com/health' },
-    @{ Name = 'website';           Url = 'https://sourovdeb.com' }
+    @{ Name = 'website'; Url = 'https://sourovdeb.com' }
 )
+if ($TunnelUrl) {
+    $ExternalChecks += @{ Name = 'cloudflare-tunnel'; Url = "$TunnelUrl/health" }
+}
 
 function Test-PortOpen {
     param([int]$Port)
@@ -68,9 +73,12 @@ function Get-ServiceStatus {
     if ($portOpen) {
         $httpResult = Test-HttpHealth -Url $Svc.Url
     }
-    $proc = Get-Process -Name $Svc.ProcessName -ErrorAction SilentlyContinue |
-        Where-Object { $_.Path -like '*latch*' -or $_.Path -like '*gateway*' -or $_.Path -like '*mcp*' -or $true } |
-        Select-Object -First 5
+    $proc = @()
+    if ($portOpen) {
+        $proc = Get-NetTCPConnection -LocalPort $Svc.Port -State Listen -ErrorAction SilentlyContinue |
+            ForEach-Object { Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue } |
+            Select-Object -First 5
+    }
 
     return @{
         Name       = $Svc.Name

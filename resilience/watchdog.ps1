@@ -31,7 +31,7 @@ $WatchServices = @(
         StartScript = 'E:\tools\unified-mcp-gateway\start.cmd'
         StartArgs   = @()
         ProcessName = 'node'
-        ProcessFilter = { param($p) $p.Path -like '*unified-mcp-gateway*' -or $p.CommandLine -like '*unified-mcp-gateway*' }
+        ProcessFilter = { param($p) ($p.Path -and $p.Path -like '*unified-mcp-gateway*') -or ($p.CommandLine -and $p.CommandLine -like '*unified-mcp-gateway*') }
     },
     @{
         Name        = 'latch'
@@ -44,10 +44,11 @@ $WatchServices = @(
     @{
         Name        = 'connector'
         Port        = 3000
+        # NOTE: connector and browser share the same start script — restarting one starts both
         StartScript = 'C:\Users\souro\.mcp-autostart\start-mcp-servers.ps1'
         StartArgs   = @()
         ProcessName = 'node'
-        ProcessFilter = { param($p) $p.CommandLine -like '*my-mcp-connector*' }
+        ProcessFilter = { param($p) $p.CommandLine -and $p.CommandLine -like '*my-mcp-connector*' }
     },
     @{
         Name        = 'browser'
@@ -55,7 +56,7 @@ $WatchServices = @(
         StartScript = 'C:\Users\souro\.mcp-autostart\start-mcp-servers.ps1'
         StartArgs   = @()
         ProcessName = 'node'
-        ProcessFilter = { param($p) $p.CommandLine -like '*browser-control-mcp*' }
+        ProcessFilter = { param($p) $p.CommandLine -and $p.CommandLine -like '*browser-control-mcp*' }
     }
 )
 

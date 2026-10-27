@@ -14,7 +14,7 @@
     Local port the tunnel forwards to (default: 3002 for gateway)
 #>
 param(
-    [string]$PrimaryUrl = 'https://things-clerk-houston-gras.trycloudflare.com/health',
+    [string]$PrimaryUrl = '',  # Set to current tunnel URL, e.g. 'https://your-tunnel.trycloudflare.com/health'
     [int]$CheckIntervalSeconds = 60,
     [int]$TargetPort = 3002
 )
@@ -104,6 +104,13 @@ function Write-Status {
 }
 
 # Main loop
+if (-not $PrimaryUrl) {
+    Write-Host "ERROR: -PrimaryUrl is required. Cloudflare tunnel URLs are ephemeral." -ForegroundColor Red
+    Write-Host "  Get the current URL from the cloudflared log or TUNNEL-URLS doc." -ForegroundColor Yellow
+    Write-Host "  Example: .	unnel-failover.ps1 -PrimaryUrl 'https://your-tunnel.trycloudflare.com/health'" -ForegroundColor Gray
+    exit 1
+}
+
 Write-Host "=== Sourov Resilience — Tunnel Failover ===" -ForegroundColor Cyan
 Write-Host "Primary: $PrimaryUrl" -ForegroundColor Gray
 Write-Host "Interval: ${CheckIntervalSeconds}s | Target: localhost:$TargetPort" -ForegroundColor Gray
