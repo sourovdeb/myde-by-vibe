@@ -111,10 +111,11 @@ fn free_mb() -> Option<u64> {
 /// Extract the newest trycloudflare URL from a cloudflared stdout log.
 fn url_from_log(path: &str) -> Option<String> {
     let data = std::fs::read_to_string(path).ok()?;
-    data.lines()
-        .rev()
-        .find_map(|l| l.find("https://").and_then(|i| l[i..].trim_end().split_whitespace().next().map(|u| u.to_string())))
-        .filter(|u| u.starts_with("https://"))
+    data.lines().rev().find_map(|l| {
+        let i = l.find("https://")?;
+        let url = l[i..].trim_end().split_whitespace().next()?;
+        if url.contains("trycloudflare.com") { Some(url.to_string()) } else { None }
+    })
 }
 
 fn pid_alive(pid: u32) -> bool {
@@ -155,6 +156,7 @@ fn spawn_tunnel(port: u16) -> Result<(Spawned, Option<String>), String> {
     let name = format!("tunnel-{}", port);
     let log = appdir().join(format!("logs/{}.log", name));
     let err = log.with_file_name(format!("{}.err", name));
+    let url_file = err.to_string_lossy().to_string();
     let child = Command::new(CLOUDFLARED)
         .args(["tunnel", "--url", &format!("http://localhost:{}", port), "--no-autoupdate"])
         .stdout(std::process::Stdio::from(std::fs::File::create(&log).map_err(|e| e.to_string())?))
@@ -169,7 +171,7 @@ fn spawn_tunnel(port: u16) -> Result<(Spawned, Option<String>), String> {
     let mut url = None;
     for _ in 0..60 {
         sleep(Duration::from_millis(500));
-        if let Some(u) = url_from_log(&log.to_string_lossy()) {
+        if let Some(u) = url_from_log(&url_file) {
             url = Some(u);
             break;
         }
@@ -182,6 +184,15 @@ fn spawn_tunnel(port: u16) -> Result<(Spawned, Option<String>), String> {
         },
         url,
     ))
+}
+
+/// True when the newest log entry is a quick-tunnel 429 (provisioning rate-limited).
+fn recent_429(path: &str) -> bool {
+    let data = match std::fs::read_to_string(path) { Ok(d) => d, Err(_) => return false };
+    data.lines()
+        .rev()
+        .take(4)
+        .any(|l| l.contains("provisioning failed with status 429"))
 }
 
 struct Plan {
@@ -215,9 +226,27 @@ fn component_ports(p: &Plan) -> Vec<(String, u16, u64)> {
     v
 }
 
+/// Spawn spec for a named component: (program, args, cwd).
+fn server_spec(name: &str) -> (String, Vec<String>, Option<String>) {
+    match name {
+        "latch" => (LATCH_EXE.to_string(), vec!["serve".into()], Some(LATCH_CWD.to_string())),
+        "bridge" => (r"E:\tools\mcp-bridge\mcp-bridge.exe".to_string(), vec![], None),
+        "sysinfo" => (NODE.to_string(), vec![SYSINFO_JS.into()], None),
+        _ => (NODE.to_string(), vec![BROWSER_JS.into()], None),
+    }
+}
+
+/// Extra port to check for bridge health (admin UI on 8767).
+fn extra_health_port(name: &str) -> Option<u16> {
+    match name {
+        "bridge" => Some(8767),
+        _ => None,
+    }
+}
+
 fn cmd_start(plan: Plan, silent: bool, watch: bool, max_mb: u64) -> i32 {
     let srv: Vec<(String, u16, u64)> = component_ports(&plan);
-    let tunnel_count = if plan.tunnels { srv.len() } else { 0 };
+    let tunnel_count = if plan.tunnels && !srv.is_empty() { srv.len() } else { 0 };
     let est_total: u64 = srv.iter().map(|s| s.2).sum::<u64>()
         + tunnel_count as u64 * EST_TUNNEL.parse().unwrap_or(47);
     if est_total > max_mb {
@@ -237,15 +266,7 @@ fn cmd_start(plan: Plan, silent: bool, watch: bool, max_mb: u64) -> i32 {
             }
             continue;
         }
-        let spec = match name.as_str() {
-            "latch" => (LATCH_EXE.to_string(), vec!["serve".into()], Some(LATCH_CWD.to_string())),
-            "bridge" => {
-                let exe = r"E:\tools\mcp-bridge\mcp-bridge.exe".to_string();
-                (exe, vec![], None)
-            }
-            "sysinfo" => (NODE.to_string(), vec![SYSINFO_JS.into()], None),
-            _ => (NODE.to_string(), vec![BROWSER_JS.into()], None),
-        };
+        let spec = server_spec(name);
         match spawn_server(name, &spec.0, &spec.1, spec.2.clone(), Some(*port)) {
             Some(s) => {
                 if !silent {
@@ -263,7 +284,7 @@ fn cmd_start(plan: Plan, silent: bool, watch: bool, max_mb: u64) -> i32 {
         }
     }
     // tunnels
-    if plan.tunnels {
+    if plan.tunnels && !srv.is_empty() {
         let st0 = load_state();
         for (_name, port, _est) in srv.iter() {
             let tname = format!("tunnel-{}", port);
@@ -302,42 +323,7 @@ fn cmd_start(plan: Plan, silent: bool, watch: bool, max_mb: u64) -> i32 {
         }
     }
     if watch {
-        if !silent {
-            println!("watching every 60s (Ctrl-C to stop the watcher only; daemons keep running)");
-        }
-        loop {
-            sleep(Duration::from_secs(60));
-            // re-run non-silent-less health check: restart only what is DOWN
-            for (name, port, _est) in component_ports(&plan).iter() {
-                if !port_up(*port) {
-                    if let Some(free) = free_mb() {
-                        if free < 1536 {
-                            if !silent {
-                                println!("[{name}] down but free RAM {free}MB < 1536MB floor; skipping restart");
-                            }
-                            continue;
-                        }
-                    }
-                    let spec = match name.as_str() {
-                        "latch" => (LATCH_EXE.to_string(), vec!["serve".into()], Some(LATCH_CWD.to_string())),
-                        "bridge" => {
-                            let exe = r"E:\tools\mcp-bridge\mcp-bridge.exe".to_string();
-                            (exe, vec![], None)
-                        }
-                        "sysinfo" => (NODE.to_string(), vec![SYSINFO_JS.into()], None),
-                        _ => (NODE.to_string(), vec![BROWSER_JS.into()], None),
-                    };
-                    if let Some(s) = spawn_server(name, &spec.0, &spec.1, spec.2.clone(), Some(*port)) {
-                        if !silent {
-                            println!("[watch] {name} restarted pid {}", s.pid);
-                        }
-                        let mut st = load_state();
-                        st.spawned.insert(name.clone(), s);
-                        save_state(&st);
-                    }
-                }
-            }
-        }
+        run_watch(&plan, silent);
     }
     // final RAM report
     if !silent {
@@ -346,6 +332,66 @@ fn cmd_start(plan: Plan, silent: bool, watch: bool, max_mb: u64) -> i32 {
         }
     }
     0
+}
+
+/// Watch loop: every 60s, restart any down server (RAM-guarded) and respawn dead tunnels.
+fn run_watch(plan: &Plan, silent: bool) {
+    if !silent {
+        println!("watching every 60s (Ctrl-C to stop the watcher only; daemons keep running)");
+    }
+    loop {
+        sleep(Duration::from_secs(60));
+        // servers: restart only what is DOWN (also check bridge admin port 8767)
+        for (name, port, _est) in component_ports(plan).iter() {
+            let main_down = !port_up(*port);
+            let extra_down = extra_health_port(name).map(|p| !port_up(p)).unwrap_or(false);
+            if main_down || extra_down {
+                if let Some(free) = free_mb() {
+                    if free < 1536 {
+                        if !silent {
+                            println!("[{name}] down but free RAM {free}MB < 1536MB floor; skipping restart");
+                        }
+                        continue;
+                    }
+                }
+                let spec = server_spec(name);
+                if let Some(s) = spawn_server(name, &spec.0, &spec.1, spec.2.clone(), Some(*port)) {
+                    if !silent {
+                        println!("[watch] {name} restarted pid {}", s.pid);
+                    }
+                    let mut st = load_state();
+                    st.spawned.insert(name.clone(), s);
+                    save_state(&st);
+                }
+            }
+        }
+        // tunnels: respawn any recorded tunnel whose pid died (quick tunnels drop)
+        if plan.tunnels {
+            let st1 = load_state();
+            for (_name, port, _est) in component_ports(plan).iter() {
+                let tname = format!("tunnel-{}", port);
+                let dead = match st1.spawned.get(&tname) {
+                    Some(s) => !pid_alive(s.pid),
+                    None => true,
+                };
+                if dead {
+                    if let Ok((s, url)) = spawn_tunnel(*port) {
+                        let u = url.unwrap_or_default();
+                        if !silent {
+                            let shown = if u.is_empty() { String::from("(pending)") } else { u.clone() };
+                            println!("[watch] {tname} respawned pid {} url {}", s.pid, shown);
+                        }
+                        let mut st = load_state();
+                        st.spawned.insert(tname.clone(), s);
+                        if !u.is_empty() {
+                            st.tunnels.insert(tname.clone(), u);
+                        }
+                        save_state(&st);
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn cmd_stop(names: Vec<String>, include_tunnels: bool) -> i32 {
@@ -386,7 +432,13 @@ fn cmd_status() -> i32 {
         let up = port_up(port);
         let pid = st.spawned.get(name).map(|s| s.pid).unwrap_or(0);
         let pid_s = if pid == 0 { "-".to_string() } else { pid.to_string() };
-        rows.push(format!("  {name:8} :{port}  {}  pid={}", if up { "UP" } else { "DOWN" }, pid_s));
+        let mut status = format!("  {name:8} :{port}  {}  pid={}", if up { "UP" } else { "DOWN" }, pid_s);
+        // bridge also has admin UI on 8767
+        if let Some(extra) = extra_health_port(name) {
+            let extra_up = port_up(extra);
+            status.push_str(&format!("  |  :{extra} {}", if extra_up { "UP" } else { "DOWN" }));
+        }
+        rows.push(status);
     }
     for (k, u) in &st.tunnels {
         let tpid = st
@@ -510,6 +562,12 @@ fn main() {
         "start" => cmd_start(plan, silent, watch, max_mb),
         "stop" => cmd_stop(stops, stop_tunnels),
         "status" => cmd_status(),
+        "reconnect" => cmd_reconnect(),
+        "doctor" => cmd_doctor(),
+        "fix-url" => {
+            cmd_fix_url();
+            0
+        }
         "autostart" => {
             let act = rest.first().map(|s| s.as_str()).unwrap_or("status");
             cmd_autostart(act)
@@ -522,6 +580,185 @@ fn main() {
     std::process::exit(code);
 }
 
+fn cmd_reconnect() -> i32 {
+    // Sequential, 429-aware tunnel re-bring-up: kill dead cfs, back off if the last
+    // attempt was rate-limited, spawn one tunnel at a time, capture the fresh URLs.
+    let st = load_state();
+    let plan = Plan { latch: true, bridge: true, sysinfo: true, browser: true, tunnels: false };
+    for (i, (_name, port, _est)) in component_ports(&plan).iter().enumerate() {
+        let tname = format!("tunnel-{}", port);
+        // skip if the local service is down — a tunnel to a dead port is useless
+        if !port_up(*port) {
+            eprintln!("[{tname}] local service on :{port} is DOWN — skipping tunnel (start it first: mcp-stack start)");
+            continue;
+        }
+        if i > 0 {
+            eprintln!("[{tname}] pacing 40s before provisioning…");
+            sleep(Duration::from_secs(40));
+        }
+        let err_file = appdir().join(format!("logs/{}.err", tname));
+        let err_s = err_file.to_string_lossy().to_string();
+        if recent_429(&err_s) {
+            eprintln!("[{tname}] last attempt was 429-rate-limited; waiting 120s before retry");
+            sleep(Duration::from_secs(120));
+        }
+        if let Some(s) = st.spawned.get(&tname) {
+            let _ = Command::new("powershell")
+                .args([
+                    "-NoProfile",
+                    "-Command",
+                    &format!("Stop-Process -Id {} -Force -ErrorAction SilentlyContinue", s.pid),
+                ])
+                .status();
+        }
+        match spawn_tunnel(*port) {
+            Ok((s, url)) => {
+                let u = url.unwrap_or_default();
+                let shown = if u.is_empty() {
+                    format!("(pending or 429 — check {err_s})")
+                } else {
+                    u.clone()
+                };
+                println!("{tname:16} pid {} public MCP endpoint: {shown}", s.pid);
+                let mut st = load_state();
+                st.spawned.insert(tname.clone(), s);
+                if !u.is_empty() {
+                    let mcp = u.trim_end_matches('/');
+                    st.tunnels.insert(tname.clone(), format!("{mcp}/mcp"));
+                }
+                save_state(&st);
+            }
+            Err(e) => println!("{tname:16} FAILED: {e}"),
+        }
+    }
+    0
+}
+
+fn cmd_fix_url() -> i32 {
+    // Point the bridge's public_url at the live 8765 tunnel from state.json, then
+    // restart the bridge so the new URL is advertised in the OAuth authorize flow.
+    let st = load_state();
+    let url = match st.tunnels.get("tunnel-8765") {
+        Some(u) => u.clone(),
+        None => {
+            println!("no live 8765 tunnel URL in state — run 'mcp-stack reconnect' first");
+            return 1;
+        }
+    };
+    let cfg_path = std::env::var("APPDATA")
+        .map(|a| a + "\\mcp-bridge\\config.json")
+        .unwrap_or_default();
+    let text = match std::fs::read_to_string(&cfg_path) {
+        Ok(t) => t,
+        Err(e) => {
+            println!("cannot read {cfg_path}: {e}");
+            return 1;
+        }
+    };
+    let mut v = match serde_json::from_str::<serde_json::Value>(&text) {
+        Ok(v) => v,
+        Err(e) => {
+            println!("config.json is not valid JSON: {e}");
+            return 1;
+        }
+    };
+    if let Some(obj) = v.as_object_mut() {
+        obj.insert("public_url".to_string(), serde_json::Value::String(url.clone()));
+    }
+    let out = serde_json::to_string_pretty(&v).expect("serialize");
+    std::fs::write(&cfg_path, out).expect("write config");
+    println!("public_url -> {url}");
+    println!("restarting bridge to pick up the new URL…");
+    let st2 = load_state();
+    if port_up(8765) {
+        if let Some(s) = st2.spawned.get("bridge") {
+            let _ = Command::new("powershell")
+                .args([
+                    "-NoProfile",
+                    "-Command",
+                    &format!("Stop-Process -Id {} -Force -ErrorAction SilentlyContinue", s.pid),
+                ])
+                .status();
+            sleep(Duration::from_secs(2));
+        } else {
+            println!("bridge is running but its pid is not in state.json — restart it from the :8767 admin page if the new URL was not picked up");
+            return 0;
+        }
+    }
+    match spawn_server("bridge", r"E:\tools\mcp-bridge\mcp-bridge.exe", &[], None, Some(8765)) {
+            Some(s) => {
+                println!("bridge restarted pid {}", s.pid);
+                let mut st = load_state();
+                st.spawned.insert("bridge".to_string(), s);
+                save_state(&st);
+            }
+            None => println!("bridge could not be started right now (port busy?) — public_url was saved; run: mcp-stack start -bridge"),
+    }
+    0
+}
+
+fn cmd_doctor() -> i32 {
+    let st = load_state();
+    println!("== mcp-stack doctor ==");
+    for (name, port) in [("latch", 3939u16), ("bridge", 8765u16), ("sysinfo", 3000u16), ("browser", 3001u16)] {
+        let up = port_up(port);
+        let verdict = if up {
+            String::from("OK")
+        } else {
+            format!("DOWN — run: mcp-stack start {name}")
+        };
+        println!("  {name:8} :{port} {verdict}");
+    }
+    for (k, u) in &st.tunnels {
+        let tpid = st.spawned.get(k).map(|s| s.pid).unwrap_or(0);
+        let alive = tpid != 0 && pid_alive(tpid);
+        let err_file = appdir().join(format!("logs/{}.err", k));
+        let err_s = err_file.to_string_lossy().to_string();
+        let r429 = recent_429(&err_s);
+        let verdict = if alive {
+            String::from("live")
+        } else if r429 {
+            String::from("429 rate-limited — wait ~2 min, then: mcp-stack reconnect")
+        } else {
+            String::from("DEAD — run: mcp-stack reconnect")
+        };
+        println!("  {k:14} {u}  [{verdict}]");
+    }
+    if st.tunnels.is_empty() {
+        println!("  (no tunnel URLs captured yet — run: mcp-stack reconnect, then status)");
+    }
+    println!("  latch panel:   local URL needs ?token= — print it with: E:\\tools\\latch\\latch.exe panel");
+    println!("  bridge admin:  http://127.0.0.1:8767/ (settings)   http://127.0.0.1:8766/");
+    let cfg_path = std::env::var("APPDATA").map(|a| a + "\\mcp-bridge\\config.json").unwrap_or_default();
+    if let Ok(t) = std::fs::read_to_string(&cfg_path) {
+        if let Ok(cfg) = serde_json::from_str::<serde_json::Value>(&t) {
+            if let Some(pub_url) = cfg.get("public_url").and_then(|v| v.as_str()) {
+                let host: String = pub_url
+                    .trim_start_matches("https://")
+                    .split('/')
+                    .next()
+                    .unwrap_or("")
+                    .to_string();
+                let resolves: bool = if host.is_empty() {
+                    true
+                } else {
+                    use std::net::ToSocketAddrs;
+                    (host.as_str(), 443).to_socket_addrs().is_ok()
+                };
+                if !resolves {
+                    println!("  WARNING: bridge public_url host does not resolve: {pub_url}");
+                    println!("           fix: update public_url in %APPDATA%\\mcp-bridge\\config.json (admin page :8767) to a LIVE tunnel URL above");
+                }
+            }
+        }
+    }
+    if let Some(free) = free_mb() {
+        println!("free RAM: {free} MB");
+    }
+    println!("Self-service: reboot/kill problem -> 'mcp-stack reconnect' -> 'mcp-stack status' -> paste the 4 URLs into chat.mistral.ai/connections");
+    0
+}
+
 fn print_usage() {
     println!(
         "mcp-stack 0.1.0 — supervisor for the local MCP stack
@@ -530,6 +767,9 @@ Usage:
   mcp-stack stop [latch|bridge|sysinfo|browser|tunnel-PORT ...] [--tunnels-stop]
   mcp-stack status
   mcp-stack autostart install|uninstall|status
+  mcp-stack reconnect     # sequential 429-safe tunnel re-bring-up (the no-agent fix)
+  mcp-stack doctor        # what is broken + the exact next command
+  mcp-stack fix-url       # point bridge public_url at the live 8765 tunnel + restart bridge
 
 Defaults:
   latch   E:\\tools\\latch\\latch.exe serve        :3939
@@ -565,8 +805,7 @@ mod tests {
     #[test]
     fn plan_from_args() {
         // mirrors the arg loop: --all sets everything
-        let mut plan = Plan::default();
-        plan = Plan { latch: true, bridge: true, sysinfo: true, browser: true, tunnels: true };
+        let plan = Plan { latch: true, bridge: true, sysinfo: true, browser: true, tunnels: true };
         assert!(plan.tunnels && plan.latch && plan.browser);
     }
 
@@ -578,5 +817,57 @@ mod tests {
             + servers.len() as u64 * EST_TUNNEL.parse::<u64>().unwrap();
         assert!(total <= 1024, "full stack estimate {} MB must fit 1 GB", total);
         assert_eq!(total, 55 + 40 + 50 + 50 + 4 * 47);
+    }
+
+    #[test]
+    fn url_from_log_skips_banner() {
+        // cloudflared logs contain a banner with https://www.cloudflare.com/website-terms/
+        // before the actual trycloudflare.com URL. The function must skip the banner.
+        let dir = std::env::temp_dir().join("mcp-stack-test");
+        let _ = std::fs::create_dir_all(&dir);
+        let f = dir.join("tunnel-test.err");
+        let log = "2026-10-27 INF Thank you for trying Cloudflare Tunnel. https://www.cloudflare.com/website-terms/\n\
+                   2026-10-27 INF Your quick Tunnel has been created! https://abc-def-ghi.trycloudflare.com\n";
+        std::fs::write(&f, log).unwrap();
+        let url = url_from_log(&f.to_string_lossy());
+        assert_eq!(url, Some("https://abc-def-ghi.trycloudflare.com".to_string()));
+        let _ = std::fs::remove_file(&f);
+    }
+
+    #[test]
+    fn url_from_log_none_when_no_tunnel() {
+        let dir = std::env::temp_dir().join("mcp-stack-test");
+        let _ = std::fs::create_dir_all(&dir);
+        let f = dir.join("tunnel-none.err");
+        std::fs::write(&f, "no urls here\n").unwrap();
+        assert_eq!(url_from_log(&f.to_string_lossy()), None);
+        let _ = std::fs::remove_file(&f);
+    }
+
+    #[test]
+    fn server_spec_known_names() {
+        let (prog, args, cwd) = server_spec("latch");
+        assert!(prog.contains("latch.exe"));
+        assert_eq!(args, vec!["serve".to_string()]);
+        assert!(cwd.is_some());
+
+        let (prog, args, _) = server_spec("bridge");
+        assert!(prog.contains("mcp-bridge.exe"));
+        assert!(args.is_empty());
+
+        let (prog, args, _) = server_spec("sysinfo");
+        assert!(prog.contains("node"));
+        assert_eq!(args.len(), 1);
+
+        let (prog, args, _) = server_spec("browser");
+        assert!(prog.contains("node"));
+        assert_eq!(args.len(), 1);
+    }
+
+    #[test]
+    fn extra_health_port_bridge() {
+        assert_eq!(extra_health_port("bridge"), Some(8767));
+        assert_eq!(extra_health_port("latch"), None);
+        assert_eq!(extra_health_port("sysinfo"), None);
     }
 }
