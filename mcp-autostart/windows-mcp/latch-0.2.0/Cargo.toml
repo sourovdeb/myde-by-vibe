@@ -1,0 +1,29 @@
+# Latch 0.2.0 — minimal manifest assembled 2026-10-27 from the source files
+# kept at E:\tools\latch\src-0.2.0 (original tree had no Cargo.toml).
+# Deployed binary: E:\tools\latch\latch.exe (SHA-256 d7e0f5...8631d, 507904 B,
+# recorded in AGENTS.md 2026-10-27). This manifest targets the same size recipe
+# as mcp-bridge; verify the rebuilt hash against the deployed binary before
+# treating it as the 0.2.0 release.
+[package]
+name = "latch"
+version = "0.2.0"
+edition = "2021"
+
+[lib]
+name = "latch"
+path = "src/lib.rs"
+
+[[bin]]
+name = "latch"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

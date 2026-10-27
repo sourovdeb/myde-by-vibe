@@ -1,0 +1,119 @@
+# Builds both Windows MCP exes and publishes them as artifacts / release assets.
+# One source of truth: mcp-autostart/windows-mcp/{mcp-bridge,latch-0.2.0}
+#
+# Jobs are independent so a latch problem never blocks mcp-bridge (and vice
+# versa). Release jobs only run on tags v* and only attach their own exe.
+#
+# Local install notes (sourov's PC):
+#   - mcp-bridge.exe  -> runs on 127.0.0.1:8765, admin page :8766 or :8767
+#     (config in %APPDATA%\mcp-bridge\config.json)
+#   - latch-0.2.0.exe -> replaces E:\tools\latch\latch.exe only after a
+#     manual hash check against the deployed binary (see latch-0.2.0/Cargo.toml)
+
+name: win-exes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mcp-autostart/windows-mcp/**"
+      - ".github/workflows/win-exes.yml"
+  pull_request:
+    paths:
+      - "mcp-autostart/windows-mcp/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build-mcp-bridge:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: mcp-autostart/windows-mcp/mcp-bridge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo test (lib + mock30 + e2e over real TCP)
+        run: cargo test --release
+      - name: Build plain release
+        run: cargo build --release
+      - name: Build tray release (Windows-only feature)
+        # Same bin name as plain; copy it aside before the plain rebuild below
+        # would overwrite it (order: plain -> tray+copy -> plain again).
+        run: |
+          cargo build --release --features tray
+          Copy-Item target/release/mcp-bridge.exe target/release/mcp-bridge-tray.exe -Force
+          cargo build --release
+      - name: Hash manifest
+        shell: pwsh
+        run: |
+          $dir = Get-Location
+          "sha256.mcp-bridge.exe=$(Get-FileHash target/release/mcp-bridge.exe -Algorithm SHA256).Hash" | Out-File SHA256SUMS.txt
+          "sha256.mcp-bridge-tray.exe=$(Get-FileHash target/release/mcp-bridge-tray.exe -Algorithm SHA256).Hash" | Add-Content SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcp-bridge
+          path: |
+            mcp-autostart/windows-mcp/mcp-bridge/target/release/mcp-bridge.exe
+            mcp-autostart/windows-mcp/mcp-bridge/target/release/mcp-bridge-tray.exe
+            mcp-autostart/windows-mcp/mcp-bridge/SHA256SUMS.txt
+
+  build-latch:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: mcp-autostart/windows-mcp/latch-0.2.0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo check (0.2.0 tree ships no tests directory yet)
+        run: cargo check --all-targets
+      - name: Build release
+        run: cargo build --release
+      - name: Hash manifest
+        shell: pwsh
+        run: |
+          "sha256.latch-0.2.0.exe=$(Get-FileHash target/release/latch.exe -Algorithm SHA256).Hash" | Out-File SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: latch-0.2.0
+          path: |
+            mcp-autostart/windows-mcp/latch-0.2.0/target/release/latch.exe
+            mcp-autostart/windows-mcp/latch-0.2.0/SHA256SUMS.txt
+
+  release-mcp-bridge:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-mcp-bridge
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: mcp-bridge, path: out }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            out/mcp-bridge.exe
+            out/mcp-bridge-tray.exe
+            out/SHA256SUMS.txt
+
+  release-latch:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-latch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: latch-0.2.0, path: out }
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            out/latch.exe
+            out/SHA256SUMS.txt

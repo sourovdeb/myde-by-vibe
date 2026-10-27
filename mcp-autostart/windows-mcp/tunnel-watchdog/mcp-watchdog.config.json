@@ -1,0 +1,28 @@
+﻿{
+    "comment":  "mcp-watchdog config (2026-10-27). Servers are restarted only if not listening; tunnels are NEVER auto-started (cloudflared costs ~47 MB each and needs RAM headroom). A dead tunnel is reported in tunnel-state.json so callers can fail over.",
+    "servers":  [
+                    {
+                        "name":  "latch",
+                        "port":  3939,
+                        "start_cmd":  "E:\\tools\\latch\\latch.exe serve",
+                        "ram_guard_mb":  512,
+                        "auto_restart":  true
+                    },
+                    {
+                        "name":  "mcp-bridge",
+                        "port":  8765,
+                        "admin_port":  8767,
+                        "start_cmd":  "E:\\tools\\mcp-bridge\\mcp-bridge.exe",
+                        "ram_guard_mb":  512,
+                        "auto_restart":  true,
+                        "note":  "Deployed copy (running PID 3936). After a new CI release download, update this path. Watchdog never restarts tunnels; use the admin page toggle at 127.0.0.1:8767."
+                    }
+                ],
+    "tunnel_log_dirs":  [
+                            "C:\\tmp",
+                            "C:\\Users\\souro\\AppData\\Roaming\\mcp-bridge"
+                        ],
+    "state_file":  "C:\\Users\\souro\\.mcp-autostart\\tunnel-state.json",
+    "log_file":  "C:\\Users\\souro\\.mcp-autostart\\logs\\mcp-watchdog.log",
+    "loop_seconds":  60
+}

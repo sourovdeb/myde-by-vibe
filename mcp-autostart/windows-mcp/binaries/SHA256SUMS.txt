@@ -1,0 +1,2 @@
+SHA256: C:\Users\souro\myde-pr3\mcp-autostart\windows-mcp\binaries\latch-v0.2.0.exe = d7e0f52948b757f908cfa4aa985bdb79c35d01111127c1f4dac0ffae3458631d
+SHA256: C:\Users\souro\myde-pr3\mcp-autostart\windows-mcp\binaries\mcp-bridge-v0.1.0.exe = 9fef7b540cf0b18be885a42e82633154f74536617326e88f5c289e7965e66cc5
