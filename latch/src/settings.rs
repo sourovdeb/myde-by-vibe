@@ -2,57 +2,193 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Clients {
-    pub grok_cli: bool,
-    pub pi: bool,
-    pub vibe: bool,
-    pub copilot: bool,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Cap {
+    Read,
+    Edit,
+    Scripts,
+    Desktop,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Caller {
+    Local,
+    Grok,
+    Mistral,
+    Chatgpt,
+    Pi,
+}
+
+impl Caller {
+    pub fn from_path(path: &str) -> Option<Self> {
+        match path.split('?').next().unwrap_or(path) {
+            "/mcp" | "/mcp/" => Some(Self::Local),
+            "/mcp/grok" => Some(Self::Grok),
+            "/mcp/mistral" => Some(Self::Mistral),
+            "/mcp/chatgpt" => Some(Self::Chatgpt),
+            "/mcp/pi" => Some(Self::Pi),
+            _ => None,
+        }
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Local => "this PC",
+            Self::Grok => "grok",
+            Self::Mistral => "mistral",
+            Self::Chatgpt => "chatgpt",
+            Self::Pi => "pi",
+        }
+    }
+
+    pub fn parse(name: &str) -> Option<Self> {
+        match name {
+            "local" | "master" => Some(Self::Local),
+            "grok" => Some(Self::Grok),
+            "mistral" => Some(Self::Mistral),
+            "chatgpt" => Some(Self::Chatgpt),
+            "pi" => Some(Self::Pi),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Tools {
+#[serde(default)]
+pub struct Caps {
+    pub read: bool,
+    pub edit: bool,
+    pub scripts: bool,
+    pub desktop: bool,
+}
+
+impl Default for Caps {
+    fn default() -> Self {
+        Self {
+            read: true,
+            edit: false,
+            scripts: false,
+            desktop: false,
+        }
+    }
+}
+
+impl Caps {
+    pub fn get(&self, cap: Cap) -> bool {
+        match cap {
+            Cap::Read => self.read,
+            Cap::Edit => self.edit,
+            Cap::Scripts => self.scripts,
+            Cap::Desktop => self.desktop,
+        }
+    }
+
+    pub fn set(&mut self, cap: Cap, on: bool) {
+        match cap {
+            Cap::Read => self.read = on,
+            Cap::Edit => self.edit = on,
+            Cap::Scripts => self.scripts = on,
+            Cap::Desktop => self.desktop = on,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Providers {
+    pub grok: Caps,
+    pub mistral: Caps,
+    pub chatgpt: Caps,
+    pub pi: Caps,
+}
+
+impl Default for Providers {
+    fn default() -> Self {
+        Self {
+            grok: Caps::default(),
+            mistral: Caps::default(),
+            chatgpt: Caps::default(),
+            pi: Caps::default(),
+        }
+    }
+}
+
+impl Providers {
+    pub fn of(&self, caller: Caller) -> &Caps {
+        match caller {
+            Caller::Local => &self.grok,
+            Caller::Grok => &self.grok,
+            Caller::Mistral => &self.mistral,
+            Caller::Chatgpt => &self.chatgpt,
+            Caller::Pi => &self.pi,
+        }
+    }
+
+    pub fn of_mut(&mut self, caller: Caller) -> &mut Caps {
+        match caller {
+            Caller::Local => &mut self.grok,
+            Caller::Grok => &mut self.grok,
+            Caller::Mistral => &mut self.mistral,
+            Caller::Chatgpt => &mut self.chatgpt,
+            Caller::Pi => &mut self.pi,
+        }
+    }
+}
+
+/// Read from older latch.json files. Not written back.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LegacyTools {
+    #[serde(default)]
     pub files: bool,
+    #[serde(default)]
     pub shell: bool,
+    #[serde(default)]
     pub handoff: bool,
 }
 
+fn legacy_version() -> u32 {
+    0
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
+    #[serde(default = "legacy_version")]
+    pub version: u32,
     pub server_on: bool,
     pub name: String,
     pub public_url: String,
     pub port: u16,
-    pub clients: Clients,
-    pub tools: Tools,
+    /// Local panel secret. Never sent to a cloud tool list.
+    pub token: String,
+    pub caps: Caps,
+    pub providers: Providers,
     pub folders: Vec<String>,
     pub commands: Vec<String>,
+    pub apps: Vec<String>,
     pub grok_model: String,
     pub mistral_model: String,
+    #[serde(default, skip_serializing)]
+    pub tools: LegacyTools,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            version: 2,
             server_on: false,
             name: "Latch".into(),
             public_url: String::new(),
             port: 3939,
-            clients: Clients {
-                grok_cli: true,
-                pi: true,
-                vibe: true,
-                copilot: true,
-            },
-            tools: Tools {
-                files: true,
-                shell: false,
-                handoff: true,
-            },
+            token: String::new(),
+            caps: Caps::default(),
+            providers: Providers::default(),
             folders: Vec::new(),
             commands: Vec::new(),
+            apps: Vec::new(),
             grok_model: "grok-4.6".into(),
             mistral_model: "mistral-large-latest".into(),
+            tools: LegacyTools::default(),
         }
     }
 }
@@ -60,7 +196,14 @@ impl Default for Settings {
 impl Settings {
     pub fn load(path: &Path) -> Result<Self, String> {
         let text = fs::read_to_string(path).map_err(|e| format!("read {}: {e}", path.display()))?;
-        serde_json::from_str(&text).map_err(|e| format!("settings json: {e}"))
+        Self::parse(&text)
+    }
+
+    pub fn parse(text: &str) -> Result<Self, String> {
+        let mut settings: Self =
+            serde_json::from_str(text).map_err(|e| format!("settings json: {e}"))?;
+        settings.migrate();
+        Ok(settings)
     }
 
     pub fn save(&self, path: &Path) -> Result<(), String> {
@@ -69,6 +212,65 @@ impl Settings {
         }
         let text = serde_json::to_string_pretty(self).map_err(|e| e.to_string())?;
         fs::write(path, text + "\n").map_err(|e| e.to_string())
+    }
+
+    /// Old files had CLI handoff switches. Version 2 uses capability switches.
+    pub fn migrate(&mut self) {
+        if self.version >= 2 {
+            return;
+        }
+        self.caps.read = self.tools.files;
+        self.caps.edit = false;
+        self.caps.scripts = self.tools.shell;
+        self.caps.desktop = false;
+        let copied = self.caps.clone();
+        self.providers.grok = copied.clone();
+        self.providers.mistral = copied.clone();
+        self.providers.chatgpt = copied.clone();
+        self.providers.pi = copied;
+        self.providers.chatgpt.edit = false;
+        self.providers.chatgpt.scripts = false;
+        self.providers.chatgpt.desktop = false;
+        self.version = 2;
+    }
+
+    /// Master switch first. A provider cannot exceed it.
+    /// Local stdio uses the master switches only.
+    pub fn allows(&self, caller: Caller, cap: Cap) -> bool {
+        if !self.caps.get(cap) {
+            return false;
+        }
+        match caller {
+            Caller::Local => true,
+            other => self.providers.of(other).get(cap),
+        }
+    }
+
+    pub fn set_cap(&mut self, caller: Caller, cap: Cap, on: bool) {
+        self.version = 2;
+        if caller == Caller::Local {
+            self.caps.set(cap, on);
+        } else {
+            self.providers.of_mut(caller).set(cap, on);
+        }
+    }
+}
+
+pub fn cap_parse(name: &str) -> Option<Cap> {
+    match name {
+        "read" | "files" => Some(Cap::Read),
+        "edit" | "write" => Some(Cap::Edit),
+        "scripts" | "script" | "shell" => Some(Cap::Scripts),
+        "desktop" => Some(Cap::Desktop),
+        _ => None,
+    }
+}
+
+pub fn parse_on(value: &str) -> Option<bool> {
+    match value {
+        "on" | "true" | "1" | "yes" => Some(true),
+        "off" | "false" | "0" | "no" => Some(false),
+        _ => None,
     }
 }
 
@@ -169,8 +371,7 @@ impl ChatCloud {
     }
 }
 
-/// The chat message a copilot would send. This is not an MCP tool call,
-/// and it is not the same transcript as the CLI.
+/// The chat message a copilot would send. This is not an MCP tool call.
 pub fn chat_envelope(cloud: ChatCloud, settings: &Settings, user_line: &str) -> serde_json::Value {
     let (model, system) = match cloud {
         ChatCloud::Mistral => (
@@ -189,4 +390,49 @@ pub fn chat_envelope(cloud: ChatCloud, settings: &Settings, user_line: &str) -> 
             { "role": "user", "content": user_line }
         ]
     })
+}
+
+pub fn new_token() -> String {
+    let mut buf = [0u8; 16];
+    if fill_random(&mut buf) {
+        return buf.iter().map(|b| format!("{b:02x}")).collect();
+    }
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    format!("{nanos:032x}{:08x}", std::process::id())
+}
+
+fn fill_random(buf: &mut [u8]) -> bool {
+    #[cfg(windows)]
+    {
+        #[link(name = "bcrypt")]
+        extern "system" {
+            fn BCryptGenRandom(
+                algorithm: *mut std::ffi::c_void,
+                buffer: *mut u8,
+                length: u32,
+                flags: u32,
+            ) -> i32;
+        }
+        const USE_SYSTEM_PREFERRED: u32 = 0x0000_0002;
+        let status = unsafe {
+            BCryptGenRandom(
+                std::ptr::null_mut(),
+                buf.as_mut_ptr(),
+                buf.len() as u32,
+                USE_SYSTEM_PREFERRED,
+            )
+        };
+        return status == 0;
+    }
+    #[cfg(not(windows))]
+    {
+        use std::io::Read;
+        if let Ok(mut file) = std::fs::File::open("/dev/urandom") {
+            return file.read_exact(buf).is_ok();
+        }
+        false
+    }
 }
