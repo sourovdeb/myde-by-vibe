@@ -160,9 +160,7 @@ fn spawn_tunnel(port: u16) -> Result<(Spawned, Option<String>), String> {
     let child = Command::new(CLOUDFLARED)
         .args(["tunnel", "--url", &format!("http://localhost:{}", port), "--no-autoupdate"])
         .stdout(std::process::Stdio::from(std::fs::File::create(&log).map_err(|e| e.to_string())?))
-        .stderr(std::process::Stdio::from(
-            std::fs::OpenOptions::new().append(true).create(true).open(err).map_err(|e| e.to_string())?,
-        ))
+        .stderr(std::process::Stdio::from(std::fs::File::create(&err).map_err(|e| e.to_string())?))
         .spawn()
         .map_err(|e| e.to_string())?;
     let pid = child.id();
