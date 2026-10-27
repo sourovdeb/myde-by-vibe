@@ -373,6 +373,15 @@ fn run_watch(plan: &Plan, silent: bool) {
                     None => true,
                 };
                 if dead {
+                    // skip if the last spawn attempt was 429-rate-limited (avoid hammering)
+                    let err_file = appdir().join(format!("logs/{}.err", tname));
+                    let err_s = err_file.to_string_lossy().to_string();
+                    if recent_429(&err_s) {
+                        if !silent {
+                            println!("[watch] {tname} dead but last attempt was 429 — skipping this cycle");
+                        }
+                        continue;
+                    }
                     if let Ok((s, url)) = spawn_tunnel(*port) {
                         let u = url.unwrap_or_default();
                         if !silent {
