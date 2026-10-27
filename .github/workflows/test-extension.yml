@@ -1,0 +1,63 @@
+name: Test Chrome Extension
+
+on:
+  push:
+    paths:
+      - 'chrome-extension/**'
+      - '.github/workflows/test-extension.yml'
+  pull_request:
+    paths:
+      - 'chrome-extension/**'
+
+jobs:
+  test:
+    name: Lint + Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Validate manifest.json
+        run: |
+          cd chrome-extension
+          node -e "const m = require('./manifest.json'); console.log('Manifest v' + m.version + ' — valid'); if (!m.name || !m.version) process.exit(1)"
+
+      - name: Syntax check popup.js
+        run: node --check chrome-extension/popup.js
+
+      - name: Syntax check background.js
+        run: node --check chrome-extension/background.js
+
+      - name: Syntax check content.js
+        run: node --check chrome-extension/content.js
+
+      - name: Check for hardcoded secrets
+        run: |
+          cd chrome-extension
+          if grep -rniE '(api[_-]?key|secret|password|token)\s*[:=]\s*["'\''][a-zA-Z0-9]{16,}' --include='*.js' --include='*.html' --include='*.json' . 2>/dev/null; then
+            echo "WARNING: Possible hardcoded secrets found"
+            exit 1
+          else
+            echo "No hardcoded secrets found"
+          fi
+
+      - name: Check manifest permissions
+        run: |
+          cd chrome-extension
+          node -e "
+            const m = require('./manifest.json');
+            const perms = m.permissions || [];
+            const hosts = m.host_permissions || [];
+            console.log('Permissions:', perms.join(', '));
+            console.log('Host permissions:', hosts.join(', '));
+            // Warn about overly broad permissions
+            if (perms.includes('<all_urls>') || hosts.includes('<all_urls>')) {
+              console.log('NOTE: <all_urls> is broad — consider scoping');
+            }
+          "

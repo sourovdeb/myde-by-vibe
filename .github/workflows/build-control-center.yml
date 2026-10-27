@@ -1,0 +1,51 @@
+name: Build Sourov Control Center
+
+on:
+  push:
+    paths:
+      - 'sourov-control-center/**'
+      - '.github/workflows/build-control-center.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Control Center .exe (PyInstaller)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: sourov-control-center
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller pywebview
+
+      - name: Build with PyInstaller
+        run: pyinstaller --onefile --windowed --name "Sourov Control Center" app.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: control-center-windows-x64
+          path: sourov-control-center/dist/Sourov Control Center.exe
+          retention-days: 30
+
+      - name: Create release on tag
+        if: startsWith(github.ref, 'refs/tags/control-center-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sourov-control-center/dist/Sourov Control Center.exe
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
