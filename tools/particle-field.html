@@ -3,213 +3,310 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Particle Field — Interactive Canvas</title>
+<title>Particle Field — sourovdeb.com</title>
 <style>
-  #field { position: fixed; inset: 0; display: block; touch-action: none; cursor: crosshair; background: #050510; z-index: 1; }
+  :root {
+    --paper: #fcfbf7;
+    --ink: #172e3e;
+    --cobalt: #0047ab;
+    --rule: rgba(23, 46, 62, 0.25);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--rule);
+    flex: 0 0 auto;
+  }
+  header h1 { font-size: 14px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+  header span { font-size: 12px; color: var(--cobalt); letter-spacing: 0.06em; }
+  #stage-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
+  canvas { display: block; width: 100%; height: 100%; cursor: crosshair; touch-action: none; }
+  #hint {
+    position: absolute; top: 10px; left: 12px;
+    font-size: 11px; letter-spacing: 0.05em; opacity: 0.55;
+    pointer-events: none; user-select: none;
+  }
   #hud {
-    position: fixed; top: 14px; left: 14px; z-index: 10;
-    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-    background: rgba(10, 10, 25, 0.72); backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
-    padding: 12px 14px; color: #e8e8f5;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: 13px; max-width: min(720px, calc(100vw - 28px));
-    user-select: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--rule);
+    flex: 0 0 auto;
+    font-size: 12px;
   }
-  #hud .ctl { display: flex; flex-direction: column; gap: 3px; min-width: 120px; }
-  #hud .ctl label { font-size: 11px; letter-spacing: 0.4px; opacity: 0.75; text-transform: uppercase; }
-  #hud input[type=range] { width: 130px; accent-color: #7c6cf7; cursor: pointer; }
-  #hud .val { font-variant-numeric: tabular-nums; font-weight: 600; color: #b9a6ff; }
-  #hud button {
-    font: inherit; font-weight: 600; cursor: pointer;
-    color: #e8e8f5; background: rgba(124,108,247,0.25);
-    border: 1px solid rgba(124,108,247,0.6); border-radius: 9px;
-    padding: 8px 13px; transition: background 0.15s, transform 0.1s;
+  .ctl { display: flex; align-items: center; gap: 8px; }
+  .ctl label { text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; }
+  .ctl output { font-variant-numeric: tabular-nums; min-width: 34px; }
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    width: 130px; height: 2px; background: var(--ink); outline: none;
   }
-  #hud button:hover { background: rgba(124,108,247,0.5); }
-  #hud button:active { transform: scale(0.96); }
-  #hud .swatches { display: flex; gap: 6px; align-items: center; }
-  #hud .sw {
-    width: 24px; height: 24px; border-radius: 50%; cursor: pointer;
-    border: 2px solid rgba(255,255,255,0.25); transition: transform 0.12s, border-color 0.12s;
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 10px; height: 18px; background: var(--cobalt);
+    border: 1px solid var(--ink); border-radius: 0; cursor: ew-resize;
   }
-  #hud .sw:hover { transform: scale(1.15); }
-  #hud .sw.active { border-color: #fff; transform: scale(1.12); }
-  #tip {
-    position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
-    color: rgba(232,232,245,0.45); font-family: system-ui, sans-serif; font-size: 12px;
-    pointer-events: none; z-index: 10; letter-spacing: 0.3px;
+  input[type="range"]::-moz-range-thumb {
+    width: 10px; height: 18px; background: var(--cobalt);
+    border: 1px solid var(--ink); border-radius: 0; cursor: ew-resize;
   }
+  button, .swatch {
+    font: inherit; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    background: var(--paper); color: var(--ink);
+    border: 1px solid var(--ink); border-radius: 0;
+    padding: 5px 12px; cursor: pointer;
+  }
+  button:hover, .swatch:hover { background: var(--cobalt); color: #fff; }
+  button:active { transform: translateY(1px); }
+  #bgs { display: flex; align-items: center; gap: 6px; }
+  .swatch { width: 22px; height: 22px; padding: 0; border: 1px solid var(--rule); }
+  .swatch[aria-pressed="true"] { outline: 2px solid var(--cobalt); outline-offset: 1px; }
+  @media (max-width: 640px) { input[type="range"] { width: 90px; } }
 </style>
 </head>
 <body>
-<canvas id="field"></canvas>
+<header>
+  <h1>Particle Field</h1>
+  <span>swirls toward the pointer — sourovdeb.com</span>
+</header>
+<div id="stage-wrap">
+  <canvas id="stage"></canvas>
+  <div id="hint">move · click to burst · drag to pull</div>
+</div>
 <div id="hud">
   <div class="ctl">
-    <label>Particles <span class="val" id="countVal">900</span></label>
-    <input type="range" id="count" min="100" max="3000" step="50" value="900" />
+    <label for="count">Particles</label>
+    <input id="count" type="range" min="100" max="2500" step="50" value="900" />
+    <output id="countOut">900</output>
   </div>
   <div class="ctl">
-    <label>Force <span class="val" id="forceVal">1.0</span></label>
-    <input type="range" id="force" min="0" max="3" step="0.1" value="1" />
+    <label for="force">Force</label>
+    <input id="force" type="range" min="0.2" max="3" step="0.1" value="1.2" />
+    <output id="forceOut">1.2</output>
   </div>
   <div class="ctl">
-    <label>Swirl <span class="val" id="swirlVal">1.0</span></label>
-    <input type="range" id="swirl" min="0" max="2.5" step="0.1" value="1" />
+    <label for="swirl">Swirl</label>
+    <input id="swirl" type="range" min="0" max="2" step="0.1" value="0.9" />
+    <output id="swirlOut">0.9</output>
   </div>
-  <div class="ctl swatches">
-    <label>Background</label>
-    <div class="sw active" data-bg="#050510" style="background:#050510" title="Midnight"></div>
-    <div class="sw" data-bg="#000000" style="background:#000000" title="Black"></div>
-    <div class="sw" data-bg="#101d2e" style="background:#101d2e" title="Deep sea"></div>
-    <div class="sw" data-bg="#1d0f2e" style="background:#1d0f2e" title="Violet night"></div>
-    <div class="sw" data-bg="#f4f4fa" style="background:#f4f4fa" title="Paper"></div>
+  <div class="ctl">
+    <label for="trail">Trail</label>
+    <input id="trail" type="range" min="0.02" max="0.3" step="0.01" value="0.08" />
+    <output id="trailOut">0.08</output>
   </div>
-  <button id="reset">Reset field</button>
-  <button id="clear">Clear trails</button>
-  <button id="shot">Save screenshot</button>
+  <div id="bgs" role="group" aria-label="Background color">
+    <button class="swatch" data-bg="#fcfbf7" aria-pressed="true" title="Paper" aria-label="Paper background"></button>
+    <button class="swatch" data-bg="#141a21" title="Ink" aria-label="Ink background"></button>
+    <button class="swatch" data-bg="#0047ab" title="Cobalt" aria-label="Cobalt background"></button>
+    <button class="swatch" data-bg="#0b3b3b" title="Teal" aria-label="Teal background"></button>
+    <button class="swatch" data-bg="#1d1030" title="Night" aria-label="Night background"></button>
+  </div>
+  <button id="clearBtn">Clear trails</button>
+  <button id="resetBtn">Reset field</button>
+  <button id="shotBtn">Screenshot</button>
 </div>
-<div id="tip">Move the pointer to swirl the field — hold down to pull harder</div>
 <script>
 (function () {
-  const canvas = document.getElementById("field");
-  const ctx = canvas.getContext("2d");
-  const DPR = Math.min(window.devicePixelRatio || 1, 2);
-  let W = 0, H = 0;
-  let particles = [];
-  let bg = "#050510";
-  let lightBg = false;
-  const state = { count: 900, force: 1.0, swirl: 1.0 };
-  const pointer = { x: 0, y: 0, px: 0, py: 0, active: false, down: false, vx: 0, vy: 0 };
+  "use strict";
+  var stage = document.getElementById("stage");
+  var ctx = stage.getContext("2d");
+  var wrap = document.getElementById("stage-wrap");
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+  var bg = "#fcfbf7";
+  var particleCount = 900;
+  var forceScale = 1.2;
+  var swirlScale = 0.9;
+  var trailFade = 0.08;
+  var particles = [];
+  var running = true;
+
+  var pointer = { x: 0, y: 0, px: 0, py: 0, vx: 0, vy: 0, active: false, down: false };
 
   function resize() {
-    W = window.innerWidth; H = window.innerHeight;
-    canvas.width = W * DPR; canvas.height = H * DPR;
-    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    var w = wrap.clientWidth, h = wrap.clientHeight;
+    stage.width = Math.max(1, Math.floor(w * DPR));
+    stage.height = Math.max(1, Math.floor(h * DPR));
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    paintBg(1);
+    fillBackground(1);
   }
-  function paintBg(alpha) {
-    ctx.globalCompositeOperation = "source-over";
+  function fillBackground(alpha) {
     ctx.globalAlpha = alpha;
     ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, stage.width, stage.height);
     ctx.globalAlpha = 1;
   }
+  function isDark(hex) {
+    var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) < 128;
+  }
   function spawn(n) {
-    for (let i = 0; i < n; i++) {
+    var w = stage.width / DPR, h = stage.height / DPR;
+    for (var i = 0; i < n; i++) {
       particles.push({
-        x: Math.random() * W, y: Math.random() * H,
-        vx: 0, vy: 0, hue: Math.random() * 360,
-        size: 0.6 + Math.random() * 1.8,
-        seed: Math.random() * Math.PI * 2
+        x: Math.random() * w, y: Math.random() * h,
+        vx: (Math.random() - 0.5) * 1.2, vy: (Math.random() - 0.5) * 1.2,
+        size: 0.8 + Math.random() * 1.8,
+        hue: Math.random() * 360, life: 1
       });
     }
   }
-  function rebuild(newCount) {
-    const cur = particles.length;
-    if (newCount > cur) spawn(newCount - cur);
-    else if (newCount < cur) particles.length = newCount;
+  function syncCount() {
+    while (particles.length < particleCount) spawn(1);
+    if (particles.length > particleCount) particles.length = particleCount;
   }
-  function step(now) {
-    const t = now * 0.001;
-    paintBg(lightBg ? 0.10 : 0.075);
-    pointer.vx = pointer.x - pointer.px;
-    pointer.vy = pointer.y - pointer.py;
-    pointer.px = pointer.x; pointer.py = pointer.y;
-    ctx.globalCompositeOperation = lightBg ? "source-over" : "lighter";
-    const boost = pointer.down ? 2.6 : 1;
-    const F = state.force * boost;
-    const S = state.swirl;
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
+
+  function step() {
+    var w = stage.width / DPR, h = stage.height / DPR;
+    fillBackground(trailFade);
+
+    var f = forceScale, s = swirlScale;
+    var px = pointer.x, py = pointer.y;
+    var pull = pointer.down ? 2.2 : 1;
+
+    ctx.lineCap = "round";
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
       if (pointer.active) {
-        const dx = pointer.x - p.x;
-        const dy = pointer.y - p.y;
-        const d2 = dx * dx + dy * dy + 2400;
-        const d = Math.sqrt(d2);
-        const inv = 1 / d;
-        const pull = F * 3200 / d2;
-        const tang = S * 2600 / d2;
-        p.vx += dx * inv * pull * 60 * 0.016;
-        p.vy += dy * inv * pull * 60 * 0.016;
-        p.vx += -dy * inv * tang * 60 * 0.016;
-        p.vy +=  dx * inv * tang * 60 * 0.016;
-        const drag = Math.min(1, 900 / d2);
-        p.vx += pointer.vx * drag * 0.35;
-        p.vy += pointer.vy * drag * 0.35;
-        const prox = Math.max(0, 1 - d / 460);
-        p.hue += 0.25 + prox * 5;
-      } else {
-        p.hue += 0.25;
-        p.vx += Math.sin(t * 0.7 + p.y * 0.004 + p.seed) * 0.02;
-        p.vy += Math.cos(t * 0.6 + p.x * 0.004 + p.seed) * 0.02;
+        var dx = px - p.x, dy = py - p.y;
+        var d2 = dx * dx + dy * dy;
+        var d = Math.sqrt(d2) || 0.001;
+        if (d < 600) {
+          var strength = (f * pull * 220) / (d2 + 900);
+          var nx = dx / d, ny = dy / d;
+          var tx = -ny, ty = nx;
+          p.vx += nx * strength + tx * strength * s;
+          p.vy += ny * strength + ty * strength * s;
+          p.vx += pointer.vx * 0.02;
+          p.vy += pointer.vy * 0.02;
+        }
       }
-      p.vx += Math.sin(p.y * 0.006 + t * 0.4) * 0.018 * S;
-      p.vy += Math.cos(p.x * 0.006 + t * 0.4) * 0.018 * S;
-      p.vx *= 0.965; p.vy *= 0.965;
+      p.vx *= 0.985; p.vy *= 0.985;
+      var speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (speed > 14) { p.vx *= 14 / speed; p.vy *= 14 / speed; speed = 14; }
+      var ox = p.x, oy = p.y;
       p.x += p.vx; p.y += p.vy;
-      if (p.x < -10) p.x = W + 10; else if (p.x > W + 10) p.x = -10;
-      if (p.y < -10) p.y = H + 10; else if (p.y > H + 10) p.y = -10;
-      const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
-      const alpha = Math.min(0.9, 0.15 + speed * 0.09);
-      const light = 55 + Math.min(25, speed * 4);
-      ctx.beginPath();
-      ctx.strokeStyle = "hsla(" + (p.hue % 360) + ", 85%, " + (lightBg ? 38 : light) + "%, " + alpha + ")";
+
+      var m = 20;
+      if (p.x < -m) p.x = w + m; else if (p.x > w + m) p.x = -m;
+      if (p.y < -m) p.y = h + m; else if (p.y > h + m) p.y = -m;
+
+      var targetHue = (210 + speed * 14) % 360;
+      p.hue += (targetHue - p.hue) * 0.06;
+      if (p.hue < 0) p.hue += 360;
+      var light = isDark(bg) ? 62 : 45;
+      var alpha = Math.min(1, 0.35 + speed * 0.09);
+
+      ctx.strokeStyle = "hsla(" + p.hue.toFixed(1) + ", 85%, " + light + "%, " + alpha.toFixed(2) + ")";
       ctx.lineWidth = p.size;
-      ctx.moveTo(p.x - p.vx * 2.2, p.y - p.vy * 2.2);
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
     }
-    ctx.globalCompositeOperation = "source-over";
-    requestAnimationFrame(step);
+
+    pointer.vx *= 0.82; pointer.vy *= 0.82;
   }
-  function setPointer(e) {
-    pointer.x = e.clientX; pointer.y = e.clientY;
-    if (!pointer.active) { pointer.px = pointer.x; pointer.py = pointer.y; pointer.active = true; }
+
+  function loop() {
+    if (running) step();
+    requestAnimationFrame(loop);
   }
-  window.addEventListener("pointermove", setPointer, { passive: true });
-  window.addEventListener("pointerdown", function (e) { if (e.target === canvas) { pointer.down = true; setPointer(e); } }, { passive: true });
-  window.addEventListener("pointerup", function () { pointer.down = false; }, { passive: true });
-  window.addEventListener("pointerleave", function () { pointer.active = false; pointer.down = false; });
-  canvas.addEventListener("pointerdown", function () { paintBg(1); }, { passive: true });
-  const bind = function (id, valId, key, fmt) {
-    const el = document.getElementById(id), out = document.getElementById(valId);
+
+  function pos(e) {
+    var r = stage.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  stage.addEventListener("pointermove", function (e) {
+    var q = pos(e);
+    pointer.vx = q.x - pointer.x; pointer.vy = q.y - pointer.y;
+    pointer.x = q.x; pointer.y = q.y;
+    pointer.active = true;
+  });
+  stage.addEventListener("pointerdown", function (e) {
+    var q = pos(e);
+    pointer.down = true;
+    pointer.x = q.x; pointer.y = q.y; pointer.active = true;
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      var dx = p.x - q.x, dy = p.y - q.y;
+      var d2 = dx * dx + dy * dy;
+      if (d2 < 16000) {
+        var d = Math.sqrt(d2) || 1;
+        var kick = (1 - d / 126) * 6;
+        p.vx += (dx / d) * kick;
+        p.vy += (dy / d) * kick;
+        p.hue = (p.hue + 60) % 360;
+      }
+    }
+  });
+  window.addEventListener("pointerup", function () { pointer.down = false; });
+  stage.addEventListener("pointerleave", function () { pointer.active = false; });
+  stage.addEventListener("touchmove", function (e) { e.preventDefault(); }, { passive: false });
+
+  function bind(id, out, apply) {
+    var el = document.getElementById(id), o = document.getElementById(out);
     el.addEventListener("input", function () {
-      const v = parseFloat(el.value);
-      state[key] = v;
-      out.textContent = fmt(v);
-      if (key === "count") rebuild(Math.round(v));
+      var v = parseFloat(el.value);
+      o.textContent = el.value;
+      apply(v);
     });
-  };
-  bind("count", "countVal", "count", function (v) { return Math.round(v); });
-  bind("force", "forceVal", "force", function (v) { return v.toFixed(1); });
-  bind("swirl", "swirlVal", "swirl", function (v) { return v.toFixed(1); });
-  document.querySelectorAll("#hud .sw").forEach(function (s) {
-    s.addEventListener("click", function () {
-      document.querySelectorAll("#hud .sw").forEach(function (x) { x.classList.remove("active"); });
-      s.classList.add("active");
-      bg = s.dataset.bg;
-      lightBg = bg === "#f4f4fa";
-      paintBg(1);
-    });
+  }
+  bind("count", "countOut", function (v) { particleCount = v; syncCount(); });
+  bind("force", "forceOut", function (v) { forceScale = v; });
+  bind("swirl", "swirlOut", function (v) { swirlScale = v; });
+  bind("trail", "trailOut", function (v) { trailFade = v; });
+
+  document.getElementById("clearBtn").addEventListener("click", function () {
+    fillBackground(1);
   });
-  document.getElementById("reset").addEventListener("click", function () {
+  document.getElementById("resetBtn").addEventListener("click", function () {
     particles = [];
-    spawn(state.count);
-    paintBg(1);
+    syncCount();
+    fillBackground(1);
   });
-  document.getElementById("clear").addEventListener("click", function () { paintBg(1); });
-  document.getElementById("shot").addEventListener("click", function () {
-    const a = document.createElement("a");
+  document.getElementById("shotBtn").addEventListener("click", function () {
+    var a = document.createElement("a");
     a.download = "particle-field-" + Date.now() + ".png";
-    a.href = canvas.toDataURL("image/png");
+    a.href = stage.toDataURL("image/png");
     a.click();
   });
-  window.addEventListener("resize", function () { resize(); });
+
+  var swatches = document.querySelectorAll(".swatch");
+  Array.prototype.forEach.call(swatches, function (b) {
+    b.addEventListener("click", function () {
+      bg = b.getAttribute("data-bg");
+      Array.prototype.forEach.call(swatches, function (x) { x.setAttribute("aria-pressed", "false"); });
+      b.setAttribute("aria-pressed", "true");
+      fillBackground(1);
+    });
+  });
+
+  window.addEventListener("resize", resize);
+  document.addEventListener("visibilitychange", function () {
+    running = !document.hidden;
+  });
+
   resize();
-  spawn(state.count);
-  requestAnimationFrame(step);
+  syncCount();
+  pointer.x = stage.width / (2 * DPR);
+  pointer.y = stage.height / (2 * DPR);
+  loop();
 })();
 </script>
 </body>
