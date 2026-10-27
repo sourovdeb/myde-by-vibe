@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sourov Control Center</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #1a1a2e;
+    --bg-card: #16213e;
+    --bg-hover: #1f3460;
+    --accent: #e94560;
+    --accent-hover: #ff6b6b;
+    --green: #4ecca3;
+    --red: #e94560;
+    --yellow: #ffd460;
+    --text: #eaeaea;
+    --text-dim: #a0a0b0;
+    --border: #2a2a4a;
+  }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    user-select: none;
+  }
+  .titlebar {
+    -webkit-app-region: drag;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+  .titlebar h1 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .titlebar h1 .logo { font-size: 18px; }
+  .titlebar .win-btns { -webkit-app-region: no-drag; display: flex; gap: 4px; }
+  .titlebar .win-btns button {
+    background: none; border: none; color: var(--text-dim);
+    width: 32px; height: 24px; cursor: pointer; border-radius: 4px;
+    font-size: 12px;
+  }
+  .titlebar .win-btns button:hover { background: var(--bg-hover); color: var(--text); }
+  .titlebar .win-btns button.close:hover { background: var(--red); color: #fff; }
+
+  .container { padding: 16px; }
+
+  /* System info bar */
+  .sys-bar {
+    display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .sys-card {
+    flex: 1; min-width: 120px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px;
+  }
+  .sys-card .label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .sys-card .value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .sys-card .bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .sys-card .bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s, background 0.3s; }
+
+  /* Section headers */
+  .section-title {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-dim); margin: 16px 0 8px;
+  }
+
+  /* Service cards */
+  .services { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .svc-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px;
+    transition: border-color 0.2s;
+  }
+  .svc-card:hover { border-color: var(--accent); }
+  .svc-card .svc-header { display: flex; align-items: center; gap: 10px; }
+  .svc-card .svc-icon { font-size: 24px; }
+  .svc-card .svc-name { font-weight: 600; font-size: 14px; }
+  .svc-card .svc-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .svc-card .svc-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; margin-top: 8px; padding: 3px 10px; border-radius: 12px;
+  }
+  .svc-card .svc-status.online { background: rgba(78,204,163,0.15); color: var(--green); }
+  .svc-card .svc-status.offline { background: rgba(233,69,96,0.15); color: var(--red); }
+  .svc-card .svc-status .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .svc-card .svc-status.online .dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .svc-card .svc-status.offline .dot { background: var(--red); }
+  .svc-card .svc-port { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .svc-card .svc-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .svc-card .svc-actions button {
+    flex: 1; padding: 6px 12px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); border-radius: 6px;
+    cursor: pointer; font-size: 12px; transition: all 0.2s;
+  }
+  .svc-card .svc-actions button:hover { background: var(--bg-hover); border-color: var(--accent); }
+  .svc-card .svc-actions button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .svc-card .svc-actions button.stop:hover { border-color: var(--red); color: var(--red); }
+  .svc-card .svc-actions button.start:hover { border-color: var(--green); color: var(--green); }
+
+  /* Quick links */
+  .quick-links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .quick-links button {
+    padding: 8px 16px; border: 1px solid var(--border);
+    background: var(--bg-card); color: var(--text); border-radius: 6px;
+    cursor: pointer; font-size: 13px; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .quick-links button:hover { background: var(--bg-hover); border-color: var(--accent); }
+
+  /* Tools panel */
+  .tools-panel {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px; margin-top: 8px;
+  }
+  .tools-panel .tools-count { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .tools-panel .tools-list {
+    display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px;
+    max-height: 120px; overflow-y: auto;
+  }
+  .tools-panel .tool-tag {
+    font-size: 11px; padding: 2px 8px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text-dim);
+    font-family: 'Consolas', monospace;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--bg-card); border: 1px solid var(--green);
+    color: var(--text); padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; opacity: 0; transform: translateY(10px);
+    transition: all 0.3s; pointer-events: none; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.error { border-color: var(--red); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .footer {
+    text-align: center; font-size: 11px; color: var(--text-dim);
+    padding: 12px; margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="titlebar">
+  <h1><span class="logo">🎛️</span> Sourov Control Center</h1>
+  <div class="win-btns">
+    <button onclick="pywebview.api.minimize_window()">─</button>
+    <button class="close" onclick="pywebview.api.close_window()">✕</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- System Info -->
+  <div class="sys-bar" id="sysBar">
+    <div class="sys-card">
+      <div class="label">RAM</div>
+      <div class="value" id="ramValue">--</div>
+      <div class="bar"><div class="bar-fill" id="ramBar" style="width:0%"></div></div>
+    </div>
+    <div class="sys-card">
+      <div class="label">CPU</div>
+      <div class="value" id="cpuValue">--</div>
+      <div class="bar"><div class="bar-fill" id="cpuBar" style="width:0%"></div></div>
+    </div>
+    <div class="sys-card">
+      <div class="label">Disk C:</div>
+      <div class="value" id="diskValue">--</div>
+      <div class="bar"><div class="bar-fill" id="diskBar" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Services -->
+  <div class="section-title">Services</div>
+  <div class="services" id="servicesGrid">
+    <div style="color:var(--text-dim)">Loading...</div>
+  </div>
+
+  <!-- Gateway Tools -->
+  <div class="section-title">Gateway Tools</div>
+  <div class="tools-panel" id="toolsPanel">
+    <div style="color:var(--text-dim)">Loading tools...</div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="section-title">Quick Access</div>
+  <div class="quick-links">
+    <button onclick="openUrl('http://localhost:3939/panel')">🔒 Latch Panel</button>
+    <button onclick="openUrl('http://localhost:3002/health')">🌐 Gateway Health</button>
+    <button onclick="openFolder('E:\\tools\\unified-mcp-gateway')">📁 Gateway Folder</button>
+    <button onclick="openFolder('E:\\tools\\latch')">📁 Latch Folder</button>
+    <button onclick="openUrl('https://chat.mistral.ai')">💬 Mistral AI</button>
+    <button onclick="openUrl('https://github.com/sourovdeb/myde-by-vibe')">📦 GitHub Repo</button>
+  </div>
+
+  <div class="footer" id="footer">Sourov Control Center v1.0.0 — Last updated: <span id="lastUpdate">--</span></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let refreshTimer = null;
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+function openUrl(url) {
+  pywebview.api.open_url(url);
+}
+
+function openFolder(path) {
+  pywebview.api.open_folder(path);
+}
+
+function startService(key) {
+  pywebview.api.start_service(key).then(r => {
+    showToast(r.ok ? 'Starting...' : ('Error: ' + r.error), !r.ok);
+    setTimeout(refreshAll, 2000);
+  });
+}
+
+function stopService(key) {
+  pywebview.api.stop_service(key).then(r => {
+    showToast(r.ok ? 'Stopping...' : ('Error: ' + r.error), !r.ok);
+    setTimeout(refreshAll, 1500);
+  });
+}
+
+function updateSysInfo() {
+  pywebview.api.get_system_info().then(info => {
+    const ramPct = parseFloat(info.RAM_PCT || 0);
+    const ramFree = info.RAM_FREE || '--';
+    const ramTotal = info.RAM_TOTAL || '--';
+    document.getElementById('ramValue').textContent = ramFree + ' / ' + ramTotal + ' GB';
+    const ramBar = document.getElementById('ramBar');
+    ramBar.style.width = ramPct + '%';
+    ramBar.style.background = ramPct > 85 ? 'var(--red)' : ramPct > 70 ? 'var(--yellow)' : 'var(--green)';
+
+    const cpu = parseFloat(info.CPU || 0);
+    document.getElementById('cpuValue').textContent = cpu + '%';
+    const cpuBar = document.getElementById('cpuBar');
+    cpuBar.style.width = Math.min(cpu, 100) + '%';
+    cpuBar.style.background = cpu > 80 ? 'var(--red)' : cpu > 50 ? 'var(--yellow)' : 'var(--green)';
+
+    const diskFree = info.DISK_FREE || '--';
+    const diskTotal = info.DISK_TOTAL || '--';
+    const diskPct = diskTotal > 0 ? ((diskTotal - diskFree) / diskTotal * 100) : 0;
+    document.getElementById('diskValue').textContent = diskFree + ' / ' + diskTotal + ' GB';
+    const diskBar = document.getElementById('diskBar');
+    diskBar.style.width = diskPct + '%';
+    diskBar.style.background = diskPct > 90 ? 'var(--red)' : diskPct > 75 ? 'var(--yellow)' : 'var(--green)';
+  });
+}
+
+function updateServices() {
+  pywebview.api.get_services().then(services => {
+    const grid = document.getElementById('servicesGrid');
+    let html = '';
+    for (const [key, svc] of Object.entries(services)) {
+      const statusClass = svc.healthy ? 'online' : 'offline';
+      const statusText = svc.healthy ? 'Online' : 'Offline';
+      html += `
+        <div class="svc-card">
+          <div class="svc-header">
+            <span class="svc-icon">${svc.icon}</span>
+            <div>
+              <div class="svc-name">${svc.name}</div>
+              <div class="svc-desc">${svc.description}</div>
+            </div>
+          </div>
+          <div class="svc-status ${statusClass}">
+            <span class="dot"></span> ${statusText}
+          </div>
+          <div class="svc-port">Port ${svc.port} ${svc.port_open ? '(open)' : '(closed)'}</div>
+          <div class="svc-actions">
+            <button class="start" onclick="startService('${key}')" ${svc.healthy || !svc.can_start ? 'disabled' : ''}>Start</button>
+            <button class="stop" onclick="stopService('${key}')" ${!svc.healthy ? 'disabled' : ''}>Stop</button>
+          </div>
+        </div>
+      `;
+    }
+    grid.innerHTML = html;
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+  });
+}
+
+function updateTools() {
+  pywebview.api.get_gateway_tools().then(r => {
+    const panel = document.getElementById('toolsPanel');
+    if (r.ok) {
+      let tags = r.tools.map(t => `<span class="tool-tag">${t}</span>`).join('');
+      panel.innerHTML = `<div class="tools-count">${r.count} tools available</div><div class="tools-list">${tags}</div>`;
+    } else {
+      panel.innerHTML = `<div style="color:var(--red)">Gateway not reachable: ${r.error || 'unknown'}</div>`;
+    }
+  });
+}
+
+function refreshAll() {
+  updateSysInfo();
+  updateServices();
+  updateTools();
+}
+
+// Wait for pywebview to be ready
+window.addEventListener('pywebviewready', function() {
+  refreshAll();
+  refreshTimer = setInterval(refreshAll, 5000);
+});
+
+// Fallback if pywebviewready doesn't fire
+setTimeout(function() {
+  if (typeof pywebview !== 'undefined' && pywebview.api) {
+    refreshAll();
+    if (!refreshTimer) refreshTimer = setInterval(refreshAll, 5000);
+  }
+}, 2000);
+</script>
+</body>
+</html>

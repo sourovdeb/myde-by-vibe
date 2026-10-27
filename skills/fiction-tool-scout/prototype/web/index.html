@@ -1,0 +1,106 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fiction Tool Scout</title>
+<style>
+:root{--bg:#fff;--fg:#1c1c1e;--mut:#6b6b70;--line:#d9d9de;--card:#f5f5f7;--acc:#2a5bd7;--bad:#b3261e;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171c;--fg:#ececf0;--mut:#9a9aa3;--line:#33363d;--card:#1e2128;--acc:#7da2ff;--bad:#ff8a80;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#15171c;--fg:#ececf0;--mut:#9a9aa3;--line:#33363d;--card:#1e2128;--acc:#7da2ff;--bad:#ff8a80;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:.2em 0}h2{font-size:16px;margin:1.4em 0 .4em}
+textarea,input,button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px}
+textarea{width:100%;min-height:150px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;box-sizing:border-box}
+button{cursor:pointer;background:var(--acc);color:#fff;border-color:var(--acc)}
+.w{overflow-x:auto}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
+.b{background:var(--bad);color:#fff;border-radius:99px;padding:1px 8px;font-size:12px}
+#rec{font-weight:600;color:var(--acc)}#err{color:var(--bad)}.m{color:var(--mut);font-size:13px}
+pre{background:var(--card);padding:10px;border-radius:8px;overflow-x:auto;font-size:12px}
+</style></head><body><main>
+<h1>Fiction Tool Scout</h1>
+<p class="m">Paste one line per tool: name|sourced|import|export_has_bible|hard_filter|usd_per_1k_words|10 statuses (F/P/M/U). The demo rows are fixtures, not real products.</p>
+<textarea id="in" spellcheck="false"></textarea>
+<p>Budget per 80k-word novel (USD): <input id="bud" type="number" value="300" min="0" style="width:90px"> <button id="go">Evaluate</button></p>
+<p id="err"></p><p id="rec"></p>
+<h2>Ranking</h2><div class="w"><table id="tbl"></table></div>
+<h2>Top two side by side</h2><div class="w"><table id="cmp"></table></div>
+<h2>API payload</h2><button id="cp">Copy JSON</button><pre id="api"></pre>
+<h2>Integrations</h2>
+<pre>node scripts/scout.js tools.txt --budget 300
+cargo run --release -- --budget 300 &lt; tools.txt
+sh scripts/install.sh --vibe-global    # or --vibe-project, --global</pre>
+</main>
+<script>
+'use strict';
+const NAMES=['Long-form editor','Persistent story bible','Series continuity','Targeted drafting tools','Chapter drafts + cost estimate','Story-aware AI chat','Model choice (fiction-tuned + general)','Style matching','Import / .docx export','Transparent pricing'];
+const W=[10,9,8,7,6,5,4,3,2,1],TOTAL=55,V={F:1,P:.5,M:0,U:0},WORDS=80000;
+const DEMO=`# name|sourced|import|export_has_bible|hard_filter|usd_per_1k_words|r1..r10 (F full, P partial, M miss, U unverified)
+# Demo fixtures, NOT real products. Fill real rows only from official sites/docs.
+Demo Tool A|yes|yes|no|no|0.60|F,F,P,F,F,F,F,F,P,F
+Demo Tool B|yes|yes|yes|no|0.45|F,F,F,F,P,P,P,P,F,F
+Demo Tool C|yes|no|yes|yes|0.10|F,P,M,P,M,P,M,U,M,F
+Demo Tool D|no|yes|yes|no|0.20|F,F,F,F,F,F,F,F,F,F`;
+const yes=s=>/^(1|y|yes|true)$/i.test(String(s).trim());
+function parse(text){
+  const out=[];
+  String(text).split('\n').forEach((raw,n)=>{
+    const l=raw.trim();if(!l||l[0]==='#')return;
+    const f=l.split('|'),at='line '+(n+1)+': ';
+    if(f.length!==7)throw new Error(at+'need 7 fields');
+    const name=f[0].trim();if(!name)throw new Error(at+'empty name');
+    const cs=f[5].trim(),cost=Number(cs);
+    if(cs===''||!isFinite(cost)||cost<0)throw new Error(at+'bad cost');
+    const r=f[6].split(',').map(s=>s.trim().toUpperCase());
+    if(r.length!==10||r.some(x=>!Object.hasOwn(V,x)))throw new Error(at+'need 10 statuses F/P/M/U');
+    out.push({name,sourced:yes(f[1]),import:yes(f[2]),exportBible:yes(f[3]),hardFilter:yes(f[4]),usdPer1k:cost,r});
+  });
+  return out;
+}
+function evaluate(t,budget=300){
+  const raw=t.r.reduce((s,x,i)=>s+W[i]*V[x],0);
+  const cost=Math.round(t.usdPer1k*WORDS/1000*100)/100,deal=[];
+  if(!t.sourced)deal.push('unsourced');
+  if(!t.import)deal.push('no import');
+  if(!t.exportBible)deal.push('export drops bible');
+  if(t.hardFilter)deal.push('hard content filter');
+  if(cost>budget)deal.push('cost scales badly');
+  return{name:t.name,score:Math.round(raw/TOTAL*100*10)/10,cost,deal,unverified:t.r.filter(x=>x==='U').length,disq:!t.sourced,r:t.r,imp:t.import,exp:t.exportBible};
+}
+function rank(tools,budget=300){
+  const e=tools.map(t=>evaluate(t,budget));
+  e.sort((a,b)=>(a.disq-b.disq)||(b.score-a.score)||(a.name<b.name?-1:a.name>b.name?1:0));
+  return e.map((x,i)=>({...x,rank:i+1}));
+}
+function recommend(R){
+  const ok=R.filter(x=>!x.disq),c=ok.find(x=>!x.deal.length);
+  if(c)return{name:c.name,caution:false};
+  return ok.length?{name:ok[0].name,caution:true}:null;
+}
+function compare(a,b){
+  const yn=v=>v?'yes':'no';
+  return[...NAMES.map((n,i)=>({req:n,weight:W[i],a:a.r[i],b:b.r[i]})),
+    {req:'Cost per 80k words (USD)',weight:null,a:a.cost,b:b.cost},
+    {req:'Manuscript import',weight:null,a:yn(a.imp),b:yn(b.imp)},
+    {req:'Export keeps story bible',weight:null,a:yn(a.exp),b:yn(b.exp)}];
+}
+function toJSON(R,budget){
+  return{budget,ranking:R.map(x=>({rank:x.rank,name:x.name,score:x.score,cost_80k:x.cost,deal_breakers:x.deal,unverified:x.unverified})),recommendation:recommend(R)};
+}
+if(typeof module!=='undefined')module.exports={NAMES,W,DEMO,parse,evaluate,rank,recommend,compare,toJSON};
+
+const $=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
+function run(){
+  $('err').textContent='';
+  try{
+    const bud=Number($('bud').value);if(!(bud>=0))throw new Error('bad budget');
+    const R=rank(parse($('in').value),bud),rec=recommend(R),ok=R.filter(x=>!x.disq);
+    $('rec').textContent=rec?'Recommended: '+rec.name+(rec.caution?' (caution: every candidate has a deal-breaker)':''):'No sourced candidate to recommend';
+    $('tbl').innerHTML='<tr><th>#</th><th>Tool</th><th>Score</th><th>$/80k words</th><th>Unverified</th><th>Deal-breakers</th></tr>'+R.map(x=>'<tr><td>'+x.rank+'</td><td>'+esc(x.name)+'</td><td>'+x.score+'</td><td>'+x.cost+'</td><td>'+x.unverified+'</td><td>'+(x.deal.length?x.deal.map(d=>'<span class="b">'+esc(d)+'</span>').join(' '):'none')+'</td></tr>').join('');
+    $('cmp').innerHTML=ok.length<2?'<tr><td>Need two sourced tools to compare.</td></tr>':'<tr><th>Requirement</th><th>'+esc(ok[0].name)+'</th><th>'+esc(ok[1].name)+'</th></tr>'+compare(ok[0],ok[1]).map(r=>'<tr><td>'+esc(r.req)+'</td><td>'+esc(r.a)+'</td><td>'+esc(r.b)+'</td></tr>').join('');
+    $('api').textContent=JSON.stringify(toJSON(R,bud),null,1);
+  }catch(e){$('err').textContent=e.message;}
+}
+$('in').value=DEMO;$('go').onclick=run;$('in').oninput=run;$('bud').oninput=run;
+$('cp').onclick=()=>{try{navigator.clipboard.writeText($('api').textContent).catch(()=>{});}catch(e){}};
+run();
+</script></body></html>

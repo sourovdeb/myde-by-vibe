@@ -1,0 +1,10 @@
+# Status and state files (generated at runtime)
+status.json
+watchdog-state.json
+tunnel-failover-status.json
+
+# Log files
+*.log
+*.log.err
+backup-tunnel.log
+backup-tunnel.log.err

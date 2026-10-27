@@ -1,0 +1,114 @@
+{
+    "mcpServers": {
+        "unified-gateway": {
+            "type": "streamable-http",
+            "url": "http://localhost:3002/mcp",
+            "headers": {
+                "Authorization": "Bearer ${GATEWAY_AUTH_TOKEN}"
+            },
+            "timeout": 60,
+            "description": "Unified MCP Gateway — 39 tools: 26 proxied (Latch file ops, browser control, system info) + 13 native (process mgmt, screenshot, clipboard, file mgmt, services, network, packages, notifications, windows, registry, env, system info). Bearer token auth required."
+        },
+        "vibe-bridge": {
+            "type": "stdio",
+            "command": "E:\\tools\\uv\\python\\cpython-3.12.13-windows-x86_64-none\\python.exe",
+            "args": [
+                "E:\\ONE-STOP-SHOP\\.pi\\mcp\\vibe-bridge\\server.py"
+            ],
+            "timeout": 300,
+            "description": "Systematic Vibe CLI + embeddings collaboration: vibe_headless (E: sandbox, secrets injected, $ cap), vibe_embed (direct API: mistral-embed-2312=1024d, codestral-embed-2505=1536d), vibe_sessions, ram_check gate."
+        },
+        "resolve": {
+            "type": "stdio",
+            "command": "E:\\tools\\davinci-resolve-mcp\\venv\\Scripts\\python.exe",
+            "args": [
+                "E:\\tools\\davinci-resolve-mcp\\src\\server.py"
+            ],
+            "cwd": "E:\\tools\\davinci-resolve-mcp",
+            "env": {
+                "PYTHONPATH": "C:\\Program Files\\Blackmagic Design\\DaVinci Resolve\\ResolvePython\\lib\\modules",
+                "DAVINCI_RESOLVE_MCP_UPDATE_CHECK": "0",
+                "PYTHONIOENCODING": "utf-8"
+            },
+            "timeout": 600,
+            "description": "DaVinci Resolve Studio 21.1 (live, external scripting). Save/back up before destructive edits; never render unless asked."
+        },
+        "browser-harness": {
+            "type": "stdio",
+            "command": "E:\\tools\\uv-tools\\bin\\browser-harness-mcp.exe",
+            "timeout": 300,
+            "description": "Control the user's real Chrome via browser-harness CDP daemon: list_tabs, page_info, new_tab, click, type, screenshots. Uses the logged-in profile. Never close tabs you did not create. If Chrome is not running, launch it detached via PowerShell Start-Process; verify downloads by byte size, not Chrome UI state."
+        },
+        "jev-skill-router": {
+            "type": "stdio",
+            "command": "C:\\Users\\souro\\.local\\bin\\uv.exe",
+            "args": [
+                "run",
+                "--project",
+                "E:\\jev-skill-router",
+                "jev-skill-router",
+                "mcp"
+            ],
+            "timeout": 90,
+            "description": "TypeSafe skill router / verification. Use for routing to Mishu skills and verifying claims."
+        },
+        "skyvern": {
+            "type": "streamable-http",
+            "url": "https://api.skyvern.com/mcp/",
+            "headers": {
+                "x-api-key": "${SKYVERN_API_KEY}"
+            },
+            "description": "Skyvern cloud browser automation. Read-only unless the user approves an action."
+        },
+        "wordpress-easy-mcp": {
+            "type": "streamable-http",
+            "url": "https://sourovdeb.com/wp-json/easy-mcp-ai/v1/mcp",
+            "headers": {
+                "X-EasyMCP-Key": "${WP_EASY_MCP_TOKEN}"
+            },
+            "description": "sourovdeb.com WordPress. Read freely; never publish, delete or change settings without explicit approval."
+        },
+        "hostinger-hosting": {
+            "type": "stdio",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "E:\\.sourov_wiki\\mcp\\wrappers\\hostinger-hosting.cmd"
+            ],
+            "timeout": 120,
+            "description": "Hostinger API (hostinger-hosting). Read-only unless the user explicitly approves a change."
+        },
+        "hostinger-domains": {
+            "type": "stdio",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "E:\\.sourov_wiki\\mcp\\wrappers\\hostinger-domains.cmd"
+            ],
+            "timeout": 120,
+            "description": "Hostinger API (hostinger-domains). Read-only unless the user explicitly approves a change."
+        },
+        "hostinger-dns": {
+            "type": "stdio",
+            "command": "cmd.exe",
+            "args": [
+                "/d",
+                "/c",
+                "E:\\.sourov_wiki\\mcp\\wrappers\\hostinger-dns.cmd"
+            ],
+            "timeout": 120,
+            "description": "Hostinger API (hostinger-dns). Read-only unless the user explicitly approves a change."
+        },
+        "latch": {
+            "type": "stdio",
+            "command": "E:\\tools\\latch\\latch.exe",
+            "args": [
+                "stdio"
+            ],
+            "timeout": 30,
+            "description": "Latch 0.2.0 local MCP via stdio (E:\tools\\latch\\latch.exe). Read files in E:\tools\\latch-share + run_task for DaVinci Resolve and OBS Studio bridges. Edit and desktop are off. Cloud caller switches are off."
+        }
+    }
+}

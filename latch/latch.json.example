@@ -1,0 +1,21 @@
+{
+  "server_on": false,
+  "name": "Latch",
+  "public_url": "",
+  "port": 3939,
+  "clients": {
+    "grok_cli": true,
+    "pi": true,
+    "vibe": true,
+    "copilot": true
+  },
+  "tools": {
+    "files": true,
+    "shell": false,
+    "handoff": true
+  },
+  "folders": [],
+  "commands": [],
+  "grok_model": "grok-4.6",
+  "mistral_model": "mistral-large-latest"
+}

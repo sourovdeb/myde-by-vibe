@@ -5,8 +5,17 @@ __pycache__/
 # Local env / secrets
 .env
 .env.*
+!.env.example
 *.secret
 
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Mistral workflows
+.venv/
+output/
+.pytest_cache/
+
+# Audit checkpoints
+audit-checkpoint-*.json

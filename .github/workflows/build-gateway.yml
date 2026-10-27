@@ -1,0 +1,70 @@
+name: Build Unified MCP Gateway
+
+on:
+  push:
+    paths:
+      - 'unified-mcp-gateway/**'
+      - '.github/workflows/build-gateway.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build gateway.exe (Node SEA)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: unified-mcp-gateway
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Syntax check
+        run: node -c server.js
+
+      - name: Install postject
+        run: npm install -g postject
+
+      - name: Generate SEA blob
+        run: node --experimental-sea-config sea-config.json
+
+      - name: Copy node.exe to gateway.exe
+        run: node -e "require('fs').copyFileSync(process.execPath, 'gateway.exe')"
+
+      - name: Inject SEA blob
+        run: npx postject gateway.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+      - name: Smoke test (start + health check + kill)
+        run: |
+          $proc = Start-Process -FilePath "$PWD\gateway.exe" -PassThru -WindowStyle Hidden
+          Start-Sleep -Seconds 3
+          try {
+            $resp = Invoke-WebRequest -Uri "http://localhost:3002/health" -UseBasicParsing -TimeoutSec 5
+            Write-Host "Health: $($resp.Content)"
+          } catch {
+            Write-Host "Health check failed: $_"
+          }
+          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-windows-x64
+          path: unified-mcp-gateway/gateway.exe
+          retention-days: 30
+
+      - name: Create release on tag
+        if: startsWith(github.ref, 'refs/tags/gateway-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: unified-mcp-gateway/gateway.exe
+          name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
