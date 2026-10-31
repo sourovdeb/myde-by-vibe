@@ -54,3 +54,8 @@ Last verified state: 2026-10-25 ~13:10Z from this machine.
 - **OPEN**: rotate MySQL password for `u839078121_gVGpV` — value was echoed into an agent transcript 2026-10-25 12:26Z. Rotate in Hostinger panel, then update `wp-config.php` + `~\.vibe\.env_secrets.md`.
 - Easy MCP AI v2.2.2 exposes 243 tools to external AIs (OAuth/API-key). Audit token list in WP-admin; revoke stale external tokens.
 - Guardian threshold interim: `ssg_settings.min_published` set 900 → 750 on 2026-10-25 (published = 729). Target 900 remains via the pending ~171-post batch. Integrity baseline resnapshotted 12:40:33Z.
+
+
+## 2026-10-31 status addendum
+
+Verified via mistral_mcp from a Vibe chat on 2026-10-31: all 9 tunnel-based cloud connectors remain stale, still pointing at the 2026-10-25/26 pre-crash quick-tunnel hosts. Full verified inventory, PC-side commands, per-connector repoint table, and consolidation (keep 5, drop 4 duplicates): see sessions/2026-10-31-connector-refix.md. Note: the gateway (:3002) tunnel is NOT owned by mcp-stack and must be provisioned manually — mcp-stack reconnect only covers 3939, 8765, 3000, 3001.
